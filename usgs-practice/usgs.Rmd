@@ -1,0 +1,280 @@
+---
+title: "資料清洗 by USGS"
+author: "RenardBao"
+date: "2018年8月6日"
+output: 
+  html_document:
+    theme: journal
+    toc: true
+    toc_depth: 3
+    toc_float:
+      collapsed: TRUE
+      smooth_scroll: TRUE
+---
+<style> p{line-height: 2em;}</style>
+##主旨
+本篇是摘自R-blogger [beyond-basic-r-data-munging](https://www.r-bloggers.com/beyond-basic-r-data-munging/)，內容包含R-blogger文章的code重現以及個人補充。主要是著重在資料清洗和整理的R套件`dplyr`裡面一些函數的功能以及運用，其中比較常用的例如:  
+
+* `select`:踢掉或者選擇某些變數
+* `filter`:根據條件進行篩選
+* `mutate`:新增欄位(可以在裡面進行運算)
+* `rename`:重新命名欄位
+* `group_by`:將資料依照欄位分組，有利於後續的分組運算
+* `summarize`:總結資料(`group_by`分組後資料，可以在這進行運算)
+
+##What we want to achieve
+> In this example, a data user is interested in how nutrient concentrations are related to discharge in a stream within a mixed use watershed of urban and agricultural land use. The site is located in Dane County near Madison, WI, and we’re focusing on daily values from a 20-year period from 1998 to 2017  
+
+引用自[beyond-basic-r-data-munging](https://www.r-bloggers.com/beyond-basic-r-data-munging/)第二段What we want to achieve，運用美國地質調查局的資料進行資料清洗和簡單的資料探索．
+
+##取得資料
+資料取自美國地質調查局的國家水資源資訊系統(NWIS)，其是透過R套件`dataRetrieval`進行資料串接，套件也提供很多直接針對欄位進行重新命名或者其他變數處理的函數．
+
+資料的欄位選取透過`readNWISdv`裡參數parameterCd進行指定，通常是五個數字代碼，以下為本文運用的欄位說明，也可以上美國地質調查局NWIS[查詢代碼](https://nwis.waterdata.usgs.gov/usa/nwis/pmcodes)頁面進行查詢：
+
+* 80154 Suspended sediment concentration (SSC)懸浮沉積物
+* 00060 Stream flow, mean. daily 平均日流量
+* 00665 Phosphorus 磷
+* 00671 Orthophosphate 正磷酸鹽
+
+```{r, results='hide',warning=FALSE,message=FALSE}
+require(dplyr)
+require(dataRetrieval)
+require(lubridate)
+require(tidyr)
+require(ggplot2)
+require(viridis)
+
+
+# 取得yahara河流資料，位於威斯康辛州
+yahara_no <- '05427718'
+#選取資料欄位
+params <- c('00060', '00671', '80154', '00665')
+
+# 從NWIS取得資料
+yahara_dat <- readNWISdv(siteNumbers = yahara_no, 
+                         parameterCd = params, 
+                         startDate = '1997-10-01', 
+                         endDate = '2017-09-30')
+# 運用dataRetrieval套件裡面renameNWISColumns對欄位進行重新命名 
+yahara_dat <- renameNWISColumns(yahara_dat, 
+                                p00665 = "TP_mgL",
+                                p00671 = "Orthophosphate_mgL",
+                                p80154 = "SS_mgL")
+```
+
+##匹配字串
+在我們的資料裡有些欄位名字字尾包含"_cd"，我們可以運用`grep`和`gsub`。
+`grep`:回傳匹配的位置或字串。
+`gsub`:回傳匹配後替換的字串。
+
+```{r}
+grep('_cd', names(yahara_dat)) # 回傳位置
+grep('_cd', names(yahara_dat), value = TRUE) # 回傳字串
+#回傳符合條件'_cd',並替換成'_code'
+gsub('_cd', '_code', names(yahara_dat))
+
+```
+
+
+透過`dplyr`的`contains`和`select`組合將包含'_cd'的欄位踢掉
+```{r}
+yahara_dat <- select(yahara_dat, -contains('_cd'))
+head(yahara_dat)
+```
+
+##新增水質年份的欄位{.tabset .tabset-pills}
+我們來分析依照不同年份其水質的變化，雖然在取得的資料有Date這個欄位，但是美國地質調查局似乎有比較不一樣的定義(可能跟調查起始日有關)．因此，我們可以運用`dataRetrieval`套件內建的`addWaterYear`函數來增加水質年份的欄位，然後再透過`group_by`對每個年份分組，`mutate`根據分好組的年份進行日流量的累計並且新增一個欄位．
+
+###分組{#tab-1}
+```{r}
+#新增水質年份
+yahara_dat <- addWaterYear(yahara_dat)
+#n()依照wateryear分組而變成1:365
+#cumsum(Flow)也會依照分組進行累計
+cumulative_dat <- yahara_dat %>% group_by(waterYear) %>%
+                  mutate(cumulative_dis = cumsum(Flow), 
+                         wy_doy = seq(1:n())) %>% as.data.frame()
+cumulative_dat[360:370,c(3,8,9)]
+```
+
+###沒分組{#tab-2}
+```{r}
+#n()沒分組則依照yahara_dat的列數
+#cumsum(Flow)則依照yahara_dat列數進行累計
+yahara_dat %>% mutate(cumulative_dis = cumsum(Flow), 
+                      wy_doy = seq(1:n())) %>% "["(360:370,c(3,8,9))
+
+```
+
+###視覺化年份流量{#tab-3}
+```{r}
+cumulative_dat %>%
+  ggplot(aes(x = wy_doy, y = cumulative_dis, group = waterYear)) +
+  geom_line(aes(color = waterYear),size = 1.5) +
+  scale_color_viridis() + #用viridis調色盤
+  scale_x_continuous(breaks = c(1, 93, 184, 275), labels = c("Oct 1", "Jan 1", "Apr 1", "July 1")) +
+  theme_bw() +
+  labs(color = "年份", x = "", y = "累積流量")
+```
+
+
+##轉換資料(連續to類別)
+我們可能需要觀察水質年份的乾燥潮濕程度，所以下面根據年份進行水量的加總並且根據水量新增類別變數，下面介紹了幾種方式將連續數值分組成類別變數。
+
+* `ifelse()`  
+* `cut()`  
+* `dplyr::case_when()`  
+
+
+```{r}
+#將流量根據年份進行加總，並且踢掉NA值
+year_sums <- yahara_dat %>%
+               filter(!is.na(Flow)) %>%
+               group_by(waterYear) %>%
+               summarize(yearly_discharge = sum(Flow, na.rm = TRUE),
+                         ndays = n()) 
+```
+
+###ifelse
+```{r}
+# 運用ifelse根據year_sums中位數上下進行分組
+year_sums <- mutate(year_sums, 
+                    discharge_high_low = 
+                      ifelse(yearly_discharge <= median(year_sums$yearly_discharge),
+                                                'low', 'high'))
+table(year_sums$discharge_high_low)
+```
+
+###cut
+我們還可以運用`cut`根據自己設定的break point來分類，下面用25%和75%來定義cutoffs的值
+```{r}
+cut_vals <- quantile(year_sums$yearly_discharge, probs = c(0.25, 0.75), na.rm = TRUE)
+cut_vals
+year_sums <- mutate(year_sums, 
+                    discharge_dry_normal_wet = 
+                      cut(yearly_discharge, 
+                          breaks = c(-Inf, cut_vals, Inf), 
+                          #Inf表示無窮值，這邊定義出上下界使其呈現三個區間
+                          labels = c("dry", "normal", "wet")))
+table(year_sums$discharge_dry_normal_wet)
+
+```
+
+###case_when
+在一些情況下，我們可能要根據多重且複雜的條件進行分類．例如我們可能想分類2000年前後水量的高低，像這樣具有兩種以上條件我們可以用`dplyr`套件裡面的`case_when`。
+```{r}
+####case_when用法#####
+set.seed(123)
+data_frame(x = 1:10, y = rnorm(10), 
+           name = c("Apple", "Banana", "Kiwi", "Orange", "Watermelon", "Grapes", 
+                    "Pear","Cantelope", "Tomato", "Satsuma")) %>% 
+  mutate(name_poor = case_when(y < 0 ~ name,TRUE ~ "123"))
+#y欄小於0的返還name
+#TRUE ~ 剩餘不符合規則的，返還"123"
+year_sums <- year_sums %>%
+  mutate(discharge_before_after = case_when(
+    yearly_discharge > median(year_sums$yearly_discharge) & 
+      waterYear > 2000 ~ "High Discharge, After",
+    yearly_discharge > median(year_sums$yearly_discharge) & 
+      waterYear <= 2000 ~ "High Discharge, Before",
+    yearly_discharge <= median(year_sums$yearly_discharge) & 
+      waterYear <= 2000 ~ "Low Discharge, Before",
+    yearly_discharge <= median(year_sums$yearly_discharge) & 
+      waterYear > 2000 ~ "Low Discharge, After")) 
+year_sums[,c("yearly_discharge","waterYear","discharge_before_after")]
+table(year_sums$discharge_before_after)
+```
+
+##將資料變形成長資料
+我們可以透過畫出分布圖觀察水質各個變數的流量和濃度，下圖是磷的分布圖:
+```{r,fig.dim = c(12, 6)}
+cumulative_dat %>% 
+  ggplot(aes(x = Date, y = TP_mgL)) +
+  geom_line(color = "pink",size = 1.2) +
+  labs(x = "Date", y = 'TP (mg/L)') +
+  theme_bw()
+```
+
+那如果我們想同時畫出各個我們所關心的變數，畫在同一張畫布上並且共用時間軸(x軸)，一起分析各個變數的濃度呢?我們可以透過`ggplot2`套件裡面的`facet_wrap`將不同變數共用同個x軸或y軸畫在同一張畫布上．但是呢，我們的資料是寬資料(一個變數一個欄位)，所以必須轉換成長資料(將多個變數欄位整合成一個變數欄位)，下面透過`tidyr`套件裡面的`gather`來進行將資料轉換成長資料．
+
+```{r,warning=F,fig.dim = c(12, 6)}
+#gather 先命名key和value的名字,後面在指定要折疊的變數
+yahara_long <- cumulative_dat %>%
+               gather(key = measured_parameter, 
+                      value = value, 
+                      Flow, TP_mgL, Orthophosphate_mgL, SS_mgL)
+yahara_long[,-1] %>% head()
+yahara_long %>% 
+  ggplot(aes(x = Date, y = value,color = measured_parameter)) +
+  geom_line() +
+  facet_wrap(~measured_parameter, ncol = 1, scales = 'free_y') +
+  labs(x = "Date", y = '') +
+  theme_bw()
+
+```
+
+我們可以看到大量排放事件伴隨著養分濃度增加，但我們懷疑溶解和微粒養分在大型排放事件中可能表現不一樣。
+當下游的湖泊產生優養化，會特別關注溶解磷在整個流域的變化。因此我們對溶解磷進入整個系統的總磷的相對量感興趣，以及該比率如何受排放事件的大小影響，我們還可以在乾濕年的背景下評估這些關係．
+
+##轉換成寬資料
+我們現在要創建一個新的TP_mgL/Orthophosphate_mgL欄位，我們可以運用`tidyr`套件的`spread`將資料轉換成寬資料再對變數進行處理．
+```{r,warning=F,message=F}
+##等於cumulative_dat %>% mutate(TP_OrthoP = TP_mgL/Orthophosphate_mgL)
+yahara_wide <- yahara_long %>%
+               spread(key = measured_parameter, value = value) %>% #將資料轉成寬的
+               mutate(TP_OrthoP = TP_mgL/Orthophosphate_mgL) #創建TP_mgL/Orthophosphate_mgL新變數
+yahara_wide %>% head()
+p_dat <- ungroup(yahara_wide) %>%
+         select(Date, TP_mgL, Orthophosphate_mgL, TP_OrthoP, Flow, waterYear) %>%
+         gather(key = P_variables, value = value, -Date, -Flow, -waterYear) %>% #反向選擇
+         left_join(select(year_sums, discharge_dry_normal_wet, waterYear)) #類似excell的vlookup
+
+p_dat %>% head()
+
+```
+
+
+將磷和排放量關係繪製成圖，並且依照年度乾溼條件分組．
+```{r,warning=FALSE,fig.dim = c(12, 6)}
+p_dat %>%
+  ggplot(aes(x = Flow, y = value)) +
+  geom_point(aes(color = discharge_dry_normal_wet), alpha = 0.3) + 
+  facet_wrap(~ P_variables, ncol = 1, scales = 'free_y') +
+  geom_smooth(aes(group = discharge_dry_normal_wet, color = discharge_dry_normal_wet), 
+              alpha = 0.5, method = 'lm') +
+  scale_y_log10() +
+  scale_x_log10() +
+  annotation_logticks() +
+  theme_bw() +
+  labs(x = "流量/排放量", color = "年度乾溼條件")
+
+```
+
+##逐行運算BY rowwise
+在一些情況下，我們可能會需要進行逐行的運算處理，但是大部分的函數都是針對欄來處理．例如USGS還有針對Yahara流域其他地點進行測量，如果我們想要逐日比較哪個地點的磷濃度比較高呢？下面會在撈取其他資料並且合併，運用`rowwise`逐行運算，搭配`which.max`回傳位置再利用向量式索引回傳字串值；除了rowwise，下面還提供了運用ifelse來達到類似效果。但是兩種方法最大差異就是當碰到相同值時，`which.max`回傳1(類似`ifelse`TRUE),`ifelse`裡的邏輯判斷則是FALSE(2)；所以相等時`which.max`搭配`rowwise`會回傳'Yahara_at_Hwy113'，而`ifelse`的方法會回傳'Yahara_at_Windsor'，但是`ifelse`可以多寫一個相等時的條件情況
+
+
+```{r,warning=F,message=F}
+yahara_site2 <- '05427850'
+yahara_dat2 <- readNWISdv(siteNumbers = yahara_site2, 
+                          parameterCd = '00665', 
+                          startDate = '1997-10-01',
+                          endDate = '2017-09-30') %>%
+                            select(Date, TP_Yah_Hwy113 = X_00665_00003)
+
+# 合併兩個地點的資料
+yahara_combo <- left_join(yahara_dat2, select(yahara_dat, TP_Yah_Windsor = TP_mgL, Date))
+
+# 逐行運算
+yahara_highest_rowise <- yahara_combo %>%
+  rowwise() %>% ##針對行來group
+  mutate(max_tp_site = 
+           c('Yahara_at_Hwy113', 'Yahara_at_Windsor')[which.max(c(TP_Yah_Hwy113, TP_Yah_Windsor))])
+yahara_highest_ifelse <- yahara_combo %>%
+  mutate(max_tp_site = ifelse(TP_Yah_Hwy113 > TP_Yah_Windsor,
+                                     "Yahara_at_Hwy113","Yahara_at_Windsor" ))
+table(yahara_highest_rowise$max_tp_site)
+table(yahara_highest_ifelse$max_tp_site)
+
+```

@@ -1,4 +1,4 @@
 # data-analysis
 包含自己做過的案子或者重現別人的code
 
-1.[水資源分析](https://github.com/renardbao/data-analysis/blob/master/usgs-practice/usgs.html)
+1.[水資源分析](https://renardbao.github.io/data-analysis/usgs-practice/usgs.html)

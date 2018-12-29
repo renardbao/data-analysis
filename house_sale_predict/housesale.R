@@ -14,7 +14,6 @@ library(xgboost)
 library(magrittr)
 library(data.table)
 library(stringr)
-#https://www.kaggle.com/erikbruin/house-prices-lasso-xgboost-and-a-detailed-eda
 
 options(scipen = 999)
 setwd("D:/r_project/data-analysis/house_sale_predict")

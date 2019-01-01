@@ -149,27 +149,22 @@ table(all$Fireplaces)
 
 #Lot----
 #LotFrontage: Linear feet of street connected to property
-#房地產走到街上的直線步數
 #486NA,這邊用同地區LotFrontage的中位數來填補這些NA
+
 names(all)[names(all) %>% str_detect("Lot") %>% which]
-ggplot(all, aes(x=as.factor(Neighborhood), y=LotFrontage)) +
+all %>% ggplot( aes(x=as.factor(Neighborhood), y=LotFrontage)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
+  geom_bar(stat='summary', fun.y = "sd", color='deeppink3') +
   theme_bw()+
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
         panel.grid.major=element_line(colour=NA)) 
 
-#原文利用迴圈進行填補
-#for (i in 1:nrow(all)){
-#  if(is.na(all$LotFrontage[i])){
-#    all$LotFrontage[i] <- as.integer(median(all$LotFrontage[all$Neighborhood==all$Neighborhood[i]], na.rm=TRUE)) 
-#  }
-#}
-
 #利用dplyr結合ifelse進行向量式填補
-all <- all %>% group_by(Neighborhood) %>% 
-          mutate(LotFrontage = ifelse(is.na(LotFrontage),
-                                      median(LotFrontage,na.rm = T),
-                                      LotFrontage)) %>% as.data.frame()
+all %<>% group_by(Neighborhood) %>% 
+         mutate(LotFrontage = ifelse(is.na(LotFrontage),
+                                     median(LotFrontage,na.rm = T),
+                                     LotFrontage)) %>% 
+         as.data.frame()
 #dplyr 測試時間0.00-0.02
 #b <- all
 #system.time(
@@ -191,22 +186,16 @@ all <- all %>% group_by(Neighborhood) %>%
 #rm(b)
 
 #LotShape: General shape of property
-#No NAs. Values seem ordinal (Regular=best)
-table(all$LotShape)
 #將其轉換為數字
-
-all$LotShape<-as.integer(revalue(all$LotShape, c('IR3'=0, 'IR2'=1, 'IR1'=2, 'Reg'=3)))
+all$LotShape<-as.integer(revalue(all$LotShape,
+                                 c('IR3'=0, 'IR2'=1,
+                                   'IR1'=2, 'Reg'=3)))
 table(all$LotShape)
 
 #LotConfig: Lot configuration
-#No NAs. The values seemed possibly ordinal to me, but the visualization does not show this. Therefore, I will convert the variable into a factor.
+#No NAs. 
 
-ggplot(all, aes(x=as.factor(LotConfig), y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='blue')+
-  scale_y_continuous(breaks= seq(0, 800000, by=100000), labels = comma) +
-  geom_label(stat = "count", aes(label = ..count.., y = ..count..))
-
-all$LotConfig <- as.factor(all$LotConfig)
+all$LotConfig %<>% as.factor()
 table(all$LotConfig)
 
 
@@ -216,6 +205,9 @@ table(all$LotConfig)
 #將車庫建造年的NA值改成YearBuilt的年份的主要原因類似於YearRemodAdd
 #在說明文件裡面YearRemodAdd: Remodel date (same as construction date if no remodeling or additions)
 #如果房子沒有改建過YearRemodAdd則跟YearBuilt一樣
+names(all)[names(all) %>% str_detect("Garage") %>% which]
+
+
 all$GarageYrBlt[is.na(all$GarageYrBlt)] <- all$YearBuilt[is.na(all$GarageYrBlt)]
 #找尋2個特別的NA
 all[!is.na(all$GarageType) & is.na(all$GarageFinish),

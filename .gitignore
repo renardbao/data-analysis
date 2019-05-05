@@ -1,0 +1,13 @@
+*.Rproj
+*.Rhistory
+*.RData
+*.Ruserdata
+*.csv
+house_sale_predict/output
+house_sale_predict/data
+house_sale_predict/presentation_plot
+*.Rproj.user
+housesale_orgrin.R
+kaggle_presentation.pptx
+kaggle_presentation.Rmd
+.Rproj.user

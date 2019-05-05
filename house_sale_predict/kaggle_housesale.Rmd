@@ -1,7 +1,7 @@
 ---
 title: "kaggle_housesale"
 author: "RenardBao"
-date: "2018¦~12¤ë24¤é"
+date: "2018å¹´12æœˆ24æ—¥"
 output: 
   html_document:
     theme: journal
@@ -17,17 +17,17 @@ knitr::opts_knit$set(root.dir ="D:/r_project/data-analysis/house_sale_predict")
 ```
 
 <style> p{line-height: 2em;}</style>
-#«e¨¥
+#å‰è¨€
 > Ask a home buyer to describe their dream house, and they probably won't begin with the height of the basement ceiling or the proximity to an east-west railroad. But this playground competition's dataset proves that much more influences price negotiations than the number of bedrooms or a white-picket fence.  
 
 >  With 79 explanatory variables describing (almost) every aspect of residential homes in Ames, Iowa, this competition challenges you to predict the final price of each home.
 
 
-³o¦¸ªº¸ê®Æ¬O¨Ó¦Û©ó[Kaggle](https://www.kaggle.com/c/house-prices-advanced-regression-techniques)¡AÃD¥Ø¬O­n¹w´ú¬ü°ê·R²üµØ¦{ªº®J©i´µ«°¥«ªº©Ğ»ù¡C§Ú·|¶i¦æ¸ê®Æ±´¯Á¡B¯S¼x¤uµ{©M¤@¨Ç¸ê®ÆµøÄ±¡A³Ì«á§Ú·|¹B¥ÎLASSO°jÂk¡BXGBoost©MSVM¨Ó«Ø¼Ò¡A¥Ø«e§Ú¬O²Ä885¦W(TOP19%)¡C
+é€™æ¬¡çš„è³‡æ–™æ˜¯ä¾†è‡ªæ–¼[Kaggle](https://www.kaggle.com/c/house-prices-advanced-regression-techniques)ï¼Œé¡Œç›®æ˜¯è¦é æ¸¬ç¾åœ‹æ„›è·è¯å·çš„åŸƒå§†æ–¯åŸå¸‚çš„æˆ¿åƒ¹ã€‚æˆ‘æœƒé€²è¡Œè³‡æ–™æ¢ç´¢ã€ç‰¹å¾µå·¥ç¨‹å’Œä¸€äº›è³‡æ–™è¦–è¦ºï¼Œæœ€å¾Œæˆ‘æœƒé‹ç”¨LASSOè¿´æ­¸ã€XGBoostå’ŒSVMä¾†å»ºæ¨¡ï¼Œç›®å‰æˆ‘æ˜¯ç¬¬885å(TOP19%)ã€‚
 
-#«e¸m§@·~
+#å‰ç½®ä½œæ¥­
 
-¥H¤U¬O³o¦¸·|¥Î¨ìªº®M¥ó
+ä»¥ä¸‹æ˜¯é€™æ¬¡æœƒç”¨åˆ°çš„å¥—ä»¶
 ```{r, result = "hide",warning=FALSE,message=FALSE}
 library(ggplot2)
 library(dplyr)
@@ -44,39 +44,39 @@ library(stringr)
 ```
 
 
-¥ı°µ¤@¨ÇÀô¹Ò³]¸m¡C
+å…ˆåšä¸€äº›ç’°å¢ƒè¨­ç½®ã€‚
 
 ```{r}
 
 options(scipen = 999)
-train <- read.csv("train.csv", stringsAsFactors = F)
-test <- read.csv("test.csv", stringsAsFactors = F)
-#¤§«ásubmission­n¥Î¨ìtest$id
+train <- read.csv("data/train.csv", stringsAsFactors = F)
+test <- read.csv("data/test.csv", stringsAsFactors = F)
+#ä¹‹å¾Œsubmissionè¦ç”¨åˆ°test$id
 test_labels <- test$Id
-#test¸ê®Æ¶°¨S¦³saleprice,¥ÎNA¶ñ¸É
+#testè³‡æ–™é›†æ²’æœ‰saleprice,ç”¨NAå¡«è£œ
 test$SalePrice <- NA
 all <- rbind(train, test)
 dim(all)
 ```
 
 
-ºË¤@¤U¸ê®Æªºµ²ºc
+ç„ä¸€ä¸‹è³‡æ–™çš„çµæ§‹
 
 ```{r}
-#¦]¬°¦³ªø¹F80­ÓÅÜ¼Æ,³oÃä¥ıÂ²³æÅã¥Ü«e15­Ó¸ò¥Ø¼ĞÅÜ¼Æ
+#å› ç‚ºæœ‰é•·é”80å€‹è®Šæ•¸,é€™é‚Šå…ˆç°¡å–®é¡¯ç¤ºå‰15å€‹è·Ÿç›®æ¨™è®Šæ•¸
 str(all[,c(1:15,80)])
 ```
 
 ```{r,message=FALSE,warning=FALSE}
 num_var <-  sapply(all, is.numeric) %>% which %>% names()
 char_var <- sapply(all, is.character) %>% which %>% names()
-cat("¼Æ­ÈÅÜ¼Æ¦³",length(num_var),"­Ó",",Ãş§OÅÜ¼Æ¦³",length(char_var),"­Ó")
+cat("æ•¸å€¼è®Šæ•¸æœ‰",length(num_var),"å€‹",",é¡åˆ¥è®Šæ•¸æœ‰",length(char_var),"å€‹")
 ```
 
-#±´¯Á¸ê®Æ
-##¥Ø¼ĞÅÜ¼Æ--¾P°â»ù®æ
+#æ¢ç´¢è³‡æ–™
+##ç›®æ¨™è®Šæ•¸--éŠ·å”®åƒ¹æ ¼
 
-¬İ¤U¹Ï¥i¥Hµo²{§Ú­Ìªº¥Ø¼ĞÅÜ¼Æ"¾P°â»ù®æ"¡A¬O¤@­Ó©úÅãªº¥k°¾®pºA¡C·Q¤@·Q¨ä¹ê¤]«Ü¦X²z¡A¥«³õ¤Wµ´¤j¦h¼Æªº®ø¶OªÌ³£­t¾á¤£°_©ù¶Qªº©Ğ¤l¡C¦pªG¹Ï§Î§e²{¥ª°¾©ÎªÌ±`ºA®p§G¡A¥Nªí¸Ó¦a°Ï©Ğ»ù°¾¶Q¡A©Î³\¬OÄİ©ó°ª¯Å¦í¦v°Ï¤]¤£¤@©w¡C«á­±§Ú·|±N¾P°â»ù®æ°µlog³B²z±N¼Æ¾ÚÂà´«¦¨¤ñ¸û²Å¦X±`ºA¤À§G¡C
+çœ‹ä¸‹åœ–å¯ä»¥ç™¼ç¾æˆ‘å€‘çš„ç›®æ¨™è®Šæ•¸"éŠ·å”®åƒ¹æ ¼"ï¼Œæ˜¯ä¸€å€‹æ˜é¡¯çš„å³åå³°æ…‹ã€‚æƒ³ä¸€æƒ³å…¶å¯¦ä¹Ÿå¾ˆåˆç†ï¼Œå¸‚å ´ä¸Šçµ•å¤§å¤šæ•¸çš„æ¶ˆè²»è€…éƒ½è² æ“”ä¸èµ·æ˜‚è²´çš„æˆ¿å­ã€‚å¦‚æœåœ–å½¢å‘ˆç¾å·¦åæˆ–è€…å¸¸æ…‹å³°ä½ˆï¼Œä»£è¡¨è©²åœ°å€æˆ¿åƒ¹åè²´ï¼Œæˆ–è¨±æ˜¯å±¬æ–¼é«˜ç´šä½å®…å€ä¹Ÿä¸ä¸€å®šã€‚å¾Œé¢æˆ‘æœƒå°‡éŠ·å”®åƒ¹æ ¼åšlogè™•ç†å°‡æ•¸æ“šè½‰æ›æˆæ¯”è¼ƒç¬¦åˆå¸¸æ…‹åˆ†ä½ˆã€‚
 ```{r saleprice plot}
 all %>% filter(!(is.na(SalePrice))) %>% 
   ggplot(aes(x = SalePrice)) + 
@@ -84,34 +84,34 @@ all %>% filter(!(is.na(SalePrice))) %>%
                  binwidth = 10000) +
   scale_x_continuous(breaks= seq(0, 800000, by=100000),
                      labels = comma)+
-  theme_bw() + #¥h±¼­I´º¦â
-  theme(panel.grid=element_blank(),  #¥h±¼ºô½u
-        panel.border=element_blank(),#¥h±¼Ãä½u
-        axis.line=element_line(size=1,colour="black"))#¥[²`XY½u¶b
+  theme_bw() + #å»æ‰èƒŒæ™¯è‰²
+  theme(panel.grid=element_blank(),  #å»æ‰ç¶²ç·š
+        panel.border=element_blank(),#å»æ‰é‚Šç·š
+        axis.line=element_line(size=1,colour="black"))#åŠ æ·±XYç·šè»¸
 
 
 summary(all$SalePrice)
 
 ```
 
-##¼Æ­ÈÅÜ¼Æ©M¥Ø¼ĞÅÜ¼Æªº¬ÛÃö©Ê
-±´¯Á¸ê®Æ²Ä¤G­Ó¨BÆJ´N¬OÆ[¹î¦U­ÓÅÜ¼Æ©M¥Ø¼ĞÅÜ¼Æ¤§¶¡ªº¬ÛÃö©Ê¤F¡A¦nÅı§Ú¤§«á¯S¼x¤uµ{¤ñ¸û¦n³B²z¡C
+##æ•¸å€¼è®Šæ•¸å’Œç›®æ¨™è®Šæ•¸çš„ç›¸é—œæ€§
+æ¢ç´¢è³‡æ–™ç¬¬äºŒå€‹æ­¥é©Ÿå°±æ˜¯è§€å¯Ÿå„å€‹è®Šæ•¸å’Œç›®æ¨™è®Šæ•¸ä¹‹é–“çš„ç›¸é—œæ€§äº†ï¼Œå¥½è®“æˆ‘ä¹‹å¾Œç‰¹å¾µå·¥ç¨‹æ¯”è¼ƒå¥½è™•ç†ã€‚
 
 ```{r corplot, fig.height = 10, fig.width = 14}
 cor_numvar <- cor(all[, num_var], use="pairwise.complete.obs")
-#±Æ§Ç¤§«á¬D¥X¥h¬ÛÃö©Êµ´¹ï­È¤j©ó0.4ªº
+#æ’åºä¹‹å¾ŒæŒ‘å‡ºå»ç›¸é—œæ€§çµ•å°å€¼å¤§æ–¼0.4çš„
 cor_sortname <- sort(cor_numvar[,'SalePrice'], decreasing = TRUE) %>% 
                  as.matrix() %>% apply(1, function(x) abs(x)>0.15) %>% 
                  which() %>% names()
 cor_numvar_sort <- cor_numvar[cor_sortname, cor_sortname]
-#¬ÛÃö©ÊµøÄ±¤Æ
+#ç›¸é—œæ€§è¦–è¦ºåŒ–
 corrplot.mixed(cor_numvar_sort, tl.col="black", tl.pos = "lt")
 
 ```
 
-³z¹L¤W¹Ï¡A¬ÛÃö©Ê¤j©ó0.5ªºÅÜ¼Æ¤j·§¦³10­Ó¡B¤j©ó0.7«h¦³¨â­Ó(OverallQual & GrLivArea)¡C«á­±³Ñ¾lªº¬ÛÃö©Ê³¹¸`§Ú·|¦A¿W¥ß¥XOverallQual & GrLivArea³o¨â­Ó°ª¬ÛÃö©ÊÅÜ¼Æ¨Ó­Ó§OµøÄ±¤Æ¨ä©M¥Ø¼ĞÅÜ¼ÆªºÃö«Y¡C
+é€éä¸Šåœ–ï¼Œç›¸é—œæ€§å¤§æ–¼0.5çš„è®Šæ•¸å¤§æ¦‚æœ‰10å€‹ã€å¤§æ–¼0.7å‰‡æœ‰å…©å€‹(OverallQual & GrLivArea)ã€‚å¾Œé¢å‰©é¤˜çš„ç›¸é—œæ€§ç« ç¯€æˆ‘æœƒå†ç¨ç«‹å‡ºOverallQual & GrLivAreaé€™å…©å€‹é«˜ç›¸é—œæ€§è®Šæ•¸ä¾†å€‹åˆ¥è¦–è¦ºåŒ–å…¶å’Œç›®æ¨™è®Šæ•¸çš„é—œä¿‚ã€‚
 
-¥t¥~¡AÅÜ¼Æ¶¡ªº¦@½u©Ê°İÃD¤]­n³B²z¡C¨Ò¦pGargeCars©MGargeArea(0.89)¡BX1stFlrSF©MTotalBsmtSF(0.8)¡BTotRmsAbvGrd©MGrLivArea(0.81)¡BGarageYrBlt©MYearBuilt(0.83)µ¥µ¥¡A³o¨Ç·|¦b«á­±¯S¼x¤uµ{ªº³¡¤À¶i¦æ³B²z¡C
+å¦å¤–ï¼Œè®Šæ•¸é–“çš„å…±ç·šæ€§å•é¡Œä¹Ÿè¦è™•ç†ã€‚ä¾‹å¦‚GargeCarså’ŒGargeArea(0.89)ã€X1stFlrSFå’ŒTotalBsmtSF(0.8)ã€TotRmsAbvGrdå’ŒGrLivArea(0.81)ã€GarageYrBltå’ŒYearBuilt(0.83)ç­‰ç­‰ï¼Œé€™äº›æœƒåœ¨å¾Œé¢ç‰¹å¾µå·¥ç¨‹çš„éƒ¨åˆ†é€²è¡Œè™•ç†ã€‚
 
 
 ##OverallQual
@@ -132,7 +132,7 @@ grid.arrange(all %>% filter(!(is.na(SalePrice))) %>%
 
 
 ```
-OverallQual©M¾P°â»ù®æ©úÅãªº§e²{¥¿¬ÛÃö¡A¦Ó¥BOverallQual¶V°ª¾P°â»ù®æ¶ZÂ÷¤]¶V¤j(Â÷´²µ{«×)¡C±q½c«¬¹Ï¤W¬İ¨Ó¡A¨S¦³®t²§«Ü¤jªºÂ÷¸s­È­n½ğ±¼¡A¤ñ¸û©úÅãªº¤j·§¬OOverallQual²Ä4©M²Ä10¡C
+OverallQualå’ŒéŠ·å”®åƒ¹æ ¼æ˜é¡¯çš„å‘ˆç¾æ­£ç›¸é—œï¼Œè€Œä¸”OverallQualè¶Šé«˜éŠ·å”®åƒ¹æ ¼è·é›¢ä¹Ÿè¶Šå¤§(é›¢æ•£ç¨‹åº¦)ã€‚å¾ç®±å‹åœ–ä¸Šçœ‹ä¾†ï¼Œæ²’æœ‰å·®ç•°å¾ˆå¤§çš„é›¢ç¾¤å€¼è¦è¸¢æ‰ï¼Œæ¯”è¼ƒæ˜é¡¯çš„å¤§æ¦‚æ˜¯OverallQualç¬¬4å’Œç¬¬10ã€‚
 
 ##GrLivArea
 ```{r GrLivArea, fig.height = 10, fig.width = 14}
@@ -147,35 +147,35 @@ all %>% filter(!(is.na(SalePrice))) %>%
 
 ```
 
-¬İ°_¨Ó¥k¤U¨¤¦ü¥G¦³©Ç²§ªºÂ÷¸s­È(524,299)¡A²z½×¤W¨Ó»¡©~¦í©W¼Æ¶V°ª¾P°â»ù®æÀ³¸Ó¤]¤£·|§C¨ì­ş¸Ì¥h¡C
+çœ‹èµ·ä¾†å³ä¸‹è§’ä¼¼ä¹æœ‰æ€ªç•°çš„é›¢ç¾¤å€¼(524,299)ï¼Œç†è«–ä¸Šä¾†èªªå±…ä½åªæ•¸è¶Šé«˜éŠ·å”®åƒ¹æ ¼æ‡‰è©²ä¹Ÿä¸æœƒä½åˆ°å“ªè£¡å»ã€‚
 
 ```{r see_outlier}
-#Æ[¹îoutlier
+#è§€å¯Ÿoutlier
 all[c(524, 1299), c('SalePrice', 'GrLivArea', 'OverallQual')]
 
 ```
 
-524©M1299³o¹ï¥S§Ì¶W©_©Çªº¡AOverallQualªº¤À¼Æ¬°10¡BGrLivArea¤S¬OÄİ©ó«e¬q¯Z¡A·Ó²z¨Ó»¡©Ğ»ùÀ³¸Ó·|¶Q¨ì¤Ñ»Ú¤~¹ï¡C¦ı¬O§Ú¦b³oÃä¼È®É¥ı¤£·|½ğ±¼³o¨âµ§¸ê®Æ¡A¥L­Ì·|¦C¤J¥iºÃ¦W³æ¨Ã¦b«áÄò¯S¼x¤uµ{ªº®É­Ô·|¦A®³¥X¨Ó°Q½×¡A²¦³º¶TµM¦a½ğ±¼¸ê®Æ¬O¤@­Ó°ø¨×¤S°ª­·ÀIªº¦æ¬°¡C
+524å’Œ1299é€™å°å…„å¼Ÿè¶…å¥‡æ€ªçš„ï¼ŒOverallQualçš„åˆ†æ•¸ç‚º10ã€GrLivAreaåˆæ˜¯å±¬æ–¼å‰æ®µç­ï¼Œç…§ç†ä¾†èªªæˆ¿åƒ¹æ‡‰è©²æœƒè²´åˆ°å¤©éš›æ‰å°ã€‚ä½†æ˜¯æˆ‘åœ¨é€™é‚Šæš«æ™‚å…ˆä¸æœƒè¸¢æ‰é€™å…©ç­†è³‡æ–™ï¼Œä»–å€‘æœƒåˆ—å…¥å¯ç–‘åå–®ä¸¦åœ¨å¾ŒçºŒç‰¹å¾µå·¥ç¨‹çš„æ™‚å€™æœƒå†æ‹¿å‡ºä¾†è¨è«–ï¼Œç•¢ç«Ÿè²¿ç„¶åœ°è¸¢æ‰è³‡æ–™æ˜¯ä¸€å€‹å¥¢ä¾ˆåˆé«˜é¢¨éšªçš„è¡Œç‚ºã€‚
 
-##Æ[¹îNA­È
-¨Ó¬İ¬İ­ş¨ÇÅÜ¼Æ¥]§tNA­È¡C
+##è§€å¯ŸNAå€¼
+ä¾†çœ‹çœ‹å“ªäº›è®Šæ•¸åŒ…å«NAå€¼ã€‚
 
 ```{r NA, fig.height = 10, fig.width = 14}
 all[is.na(all) %>% colSums %>% ">"(0) %>% which] %>% 
   sapply(is.na) %>% colSums() %>% sort(decreasing = TRUE) 
 ```
 
-§Ú±N·|¦b«á­±¯S¼x¤uµ{®É³s¦P­«·s½s½X¡BÂà´«ÅÜ¼Æ®É¤@¨Ö³B²zNA­È¡C
+æˆ‘å°‡æœƒåœ¨å¾Œé¢ç‰¹å¾µå·¥ç¨‹æ™‚é€£åŒé‡æ–°ç·¨ç¢¼ã€è½‰æ›è®Šæ•¸æ™‚ä¸€ä½µè™•ç†NAå€¼ã€‚
 
-#¯S¼x¤uµ{
-##¸ê®Æ²M¬~
+#ç‰¹å¾µå·¥ç¨‹
+##è³‡æ–™æ¸…æ´—
 ###Pool
 ```{r}
 names(all)[names(all) %>% str_detect("Pool") %>% which]
 ```
 
 ####PoolQC
-2909­ÓNA  
+2909å€‹NA  
 PoolQC: Pool quality
 
 *  Ex   Excellent
@@ -202,22 +202,22 @@ all %>% filter(!(is.na(SalePrice)) & PoolQC != 0) %>%
 
 ```
 
-¦³´åªa¦Àªº©Ğ¤l¥u¦³10¶¡¡A¹Ï§Î¤WÅã¥ÜPool¬ÛÃöÅÜ¼Æ¦ü¥G¤£¨º»òÅãµÛ¼vÅT©Ğ»ù¡A¥k¤W¨¤ªº¸ê®ÆÀ³¸Ó¦³¨ä¥LÅÜ¼Æ¼vÅT¡C«á­±¯S¼x¤uµ{ªº®É­Ô§Ú©Î³\·|§â³oÃş§OÅÜ¼ÆÂà¦¨¬O§_¦³´åªa¦À´N¦n¡Aµû¯Å¥i¯à¤£¤Ó»İ­n¡C¦b³oÃä§Ú¥ı§âNA­ÈÂà¦¨NO¡A¨Ã¥B§â¥¦Âà¦¨Ãş§OÅÜ¼Æ¡C
+æœ‰æ¸¸æ³³æ± çš„æˆ¿å­åªæœ‰10é–“ï¼Œåœ–å½¢ä¸Šé¡¯ç¤ºPoolç›¸é—œè®Šæ•¸ä¼¼ä¹ä¸é‚£éº¼é¡¯è‘—å½±éŸ¿æˆ¿åƒ¹ï¼Œå³ä¸Šè§’çš„è³‡æ–™æ‡‰è©²æœ‰å…¶ä»–è®Šæ•¸å½±éŸ¿ã€‚å¾Œé¢ç‰¹å¾µå·¥ç¨‹çš„æ™‚å€™æˆ‘æˆ–è¨±æœƒæŠŠé€™é¡åˆ¥è®Šæ•¸è½‰æˆæ˜¯å¦æœ‰æ¸¸æ³³æ± å°±å¥½ï¼Œè©•ç´šå¯èƒ½ä¸å¤ªéœ€è¦ã€‚åœ¨é€™é‚Šæˆ‘å…ˆæŠŠNAå€¼è½‰æˆNOï¼Œä¸¦ä¸”æŠŠå®ƒè½‰æˆé¡åˆ¥è®Šæ•¸ã€‚
 
 ####PoolArea
-¥t¤@­Ó¸òPool¦³Ãöªº¬OPoolArea:
+å¦ä¸€å€‹è·ŸPoolæœ‰é—œçš„æ˜¯PoolArea:
 
 ```{r}
 table(all$PoolArea != 0 )
 ```
 
-³ºµM¦³13­Ó­È(PoolQC¥u¦³10­Ó)¡C
+ç«Ÿç„¶æœ‰13å€‹å€¼(PoolQCåªæœ‰10å€‹)ã€‚
 
 ```{r}
 all[all$PoolArea>0 & all$PoolQC == 0, c('SalePrice','PoolArea', 'PoolQC', 'OverallQual')]
 ```
 
-³o¤T­ÓºÃ¦ü¯Êº|­Èªº¸ê®Æ¥X²{¦b­n¹w´úªº¸ê®Æ¶°¸Ì­±¡A§Ú­Ì¤]¤£¯àÀH«K¶Ã§R±¼¡A¥u¦n³z¹LÆ[¹î²{¦³ªº10µ§¸ê®Æ¨Ó¶ñ¸ÉPoolQC¦^¥h¡C
+é€™ä¸‰å€‹ç–‘ä¼¼ç¼ºæ¼å€¼çš„è³‡æ–™å‡ºç¾åœ¨è¦é æ¸¬çš„è³‡æ–™é›†è£¡é¢ï¼Œæˆ‘å€‘ä¹Ÿä¸èƒ½éš¨ä¾¿äº‚åˆªæ‰ï¼Œåªå¥½é€éè§€å¯Ÿç¾æœ‰çš„10ç­†è³‡æ–™ä¾†å¡«è£œPoolQCå›å»ã€‚
 
 ```{r}
 all[all$PoolArea > 0,] %>% ggplot(aes(x = OverallQual,y = PoolArea,color = PoolQC)) + 
@@ -228,7 +228,7 @@ all[all$PoolArea > 0,] %>% ggplot(aes(x = OverallQual,y = PoolArea,color = PoolQ
 ```
 
 
-³z¹L¤W¹Ï§Ú·|§â³o¤T­Ó­È³£¶ñ2¦^¥h¤ñ¸û¦X²z¡C
+é€éä¸Šåœ–æˆ‘æœƒæŠŠé€™ä¸‰å€‹å€¼éƒ½å¡«2å›å»æ¯”è¼ƒåˆç†ã€‚
 
 ```{r}
 all$PoolQC[2421] <- 2
@@ -248,7 +248,7 @@ all[all$PoolArea > 0,] %>% ggplot(aes(x = OverallQual,y = PoolArea,color = PoolQ
 names(all)[names(all) %>% str_detect("Mis") %>% which]
 ```
 
-2814­ÓNA
+2814å€‹NA
 MiscFeature: Miscellaneous feature not covered in other categories
 
 * Elev Elevator
@@ -258,7 +258,7 @@ MiscFeature: Miscellaneous feature not covered in other categories
 * TenC Tennis Court
 * NA   None 
 
-Âà¦¨factor¡C
+è½‰æˆfactorã€‚
 
 ```{r MiscFeature}
 all$MiscFeature[is.na(all$MiscFeature)] <- "None"
@@ -273,7 +273,7 @@ table(all$MiscFeature)
 ```
 
 
-¬İ°_¨ÓMiscFeature³oÃş§OÅÜ¼Æ¨S¬Æ»ò¬ÛÃö¡Aµ´¤j¦h¼Æ³£¬ONone©~¦h¡C²Ä¤G¦hªºshed¤]¨S¦³©úÅã©MNone¦³®t²§¡A®t²§¤ñ¸û¤jªºTenC©MOthr¦ûªº¥ó¼Æ¤S¤Ö«Ü¦h¡C
+çœ‹èµ·ä¾†MiscFeatureé€™é¡åˆ¥è®Šæ•¸æ²’ç”šéº¼ç›¸é—œï¼Œçµ•å¤§å¤šæ•¸éƒ½æ˜¯Noneå±…å¤šã€‚ç¬¬äºŒå¤šçš„shedä¹Ÿæ²’æœ‰æ˜é¡¯å’ŒNoneæœ‰å·®ç•°ï¼Œå·®ç•°æ¯”è¼ƒå¤§çš„TenCå’ŒOthrä½”çš„ä»¶æ•¸åˆå°‘å¾ˆå¤šã€‚
 
 ####MiscVal
 ```{r}
@@ -281,19 +281,19 @@ all %>% filter(!(MiscFeature %in% "None") & MiscVal == 0) %>% select("Id","MiscV
 ```
 
 
-³o¤Tµ§¸ê®Æ§Ú¤£·|¥h§ó°Ê¥¦¡A¦]¬°§Ú¨Ã¤£ª¾¹D»ù­È¬°0¬O¦]¬°»~´ÓÁÙ¬O¥¦¯uªº´N¬O§K¶O¤jÃØ°eªº¡C
+é€™ä¸‰ç­†è³‡æ–™æˆ‘ä¸æœƒå»æ›´å‹•å®ƒï¼Œå› ç‚ºæˆ‘ä¸¦ä¸çŸ¥é“åƒ¹å€¼ç‚º0æ˜¯å› ç‚ºèª¤æ¤é‚„æ˜¯å®ƒçœŸçš„å°±æ˜¯å…è²»å¤§è´ˆé€çš„ã€‚
 
 
 
 ###Alley
-2721­ÓNA
+2721å€‹NA
 Alley: Type of alley access to property
 
 * Grvl Gravel
 * Pave Paved
 * NA   No alley access
 
-Âà¦¨factor¡C
+è½‰æˆfactorã€‚
 
 ```{r Alley}
 all$Alley[is.na(all$Alley)] <- 'None'
@@ -307,7 +307,7 @@ table(all$Alley)
 ```
 
 ###Fence
-2348­ÓNA
+2348å€‹NA
 Fence: Fence quality
 
 * GdPrv    Good Privacy
@@ -328,7 +328,7 @@ all$Fence <- as.factor(all$Fence)
 
 ```
 
-¬İ°_¨Ó¨S¦³©úÅãªº¦¸§ÇÃö«Y¡A¨S¦³Fenceªº©Ğ«Î»ù®æ¤ñ¸û°ª¡A©Ò¥HÂà¦¨factor¡C
+çœ‹èµ·ä¾†æ²’æœ‰æ˜é¡¯çš„æ¬¡åºé—œä¿‚ï¼Œæ²’æœ‰Fenceçš„æˆ¿å±‹åƒ¹æ ¼æ¯”è¼ƒé«˜ï¼Œæ‰€ä»¥è½‰æˆfactorã€‚
 
 ###Fireplace
 ```{r}
@@ -336,7 +336,7 @@ names(all)[names(all) %>% str_detect("Fireplace") %>% which]
 ```
 
 ####FireplaceQu
-1420­ÓNA
+1420å€‹NA
 * Ex   Excellent - Exceptional Masonry Fireplace
 * Gd   Good - Masonry Fireplace in main level
 * TA   Average - Prefabricated Fireplace in main living area or Masonry  Fireplace in basement  
@@ -344,7 +344,7 @@ names(all)[names(all) %>% str_detect("Fireplace") %>% which]
 * Po   Poor - Ben Franklin Stove
 * NA   No Fireplace
 
-¹³³oºØ¦bÅÜ¼Æ»¡©ú©ÎªÌ±`²z¤W¯à°÷»{ª¾¬O¦³¦¸§Çªº¡A§Ú³£·|§â¥LÂà¦¨¼Æ­È¡C
+åƒé€™ç¨®åœ¨è®Šæ•¸èªªæ˜æˆ–è€…å¸¸ç†ä¸Šèƒ½å¤ èªçŸ¥æ˜¯æœ‰æ¬¡åºçš„ï¼Œæˆ‘éƒ½æœƒæŠŠä»–è½‰æˆæ•¸å€¼ã€‚
 
 ```{r FireplaceQu}
 all$FireplaceQu[is.na(all$FireplaceQu)] <- 'None'
@@ -369,8 +369,8 @@ names(all)[names(all) %>% str_detect("Lot") %>% which]
 
 ####LotFrontage
 LotFrontage: Linear feet of street connected to property
-486­ÓNA
-ªì¨B«Ø¼Ò§Ú¥ı®Ú¾Ú©Ğ«Î©Ò¦b¦a°Ïªº¤¤¦ì¼Æ¨Ó¶ñ¸É¡C¬°¤°»ò©O¡H®³¥xÆW¨Ó»¡§a¡A¹Å¸q¿¤ªº©Ğ¤l¤j³¡¤À¨Ó»¡­n¨ìµó¤WªÖ©w¤ñ¥x¥_¥«ªº©Ğ¤l¥h¨ìµó¤WÁÙ­n»·¡A³o´N¬O­¥°Ï¸ò¥«°Ïªº®t§O¡C¦ı¬O³o¼ËÁÙ¬O·|¦³°¾»~¡A¥H¥x¥_¥«¨Ó»¡¥_§ë°Ï¤º´ò°Ï¦³¥i¯à·|¤ñ¤¤¥¿°Ï«H¸q°ÏÁÙ­n¨Óªº»·¡A¤]´N¬O»¡«°¥«¤º³¡¤]·|¦s¦bµÛ«Ü¤jªº®t²§¡C¤U¤@¦¸§Ú¦³¥i¯à·|°w¹ï³o­ÓÅÜ¼Æ³æ¿W«Ø¤@­Ó¼Ò«¬¨Ó¦ô­p¥¦ªº¿òº|­È¡C
+486å€‹NA
+åˆæ­¥å»ºæ¨¡æˆ‘å…ˆæ ¹æ“šæˆ¿å±‹æ‰€åœ¨åœ°å€çš„ä¸­ä½æ•¸ä¾†å¡«è£œã€‚ç‚ºä»€éº¼å‘¢ï¼Ÿæ‹¿å°ç£ä¾†èªªå§ï¼Œå˜‰ç¾©ç¸£çš„æˆ¿å­å¤§éƒ¨åˆ†ä¾†èªªè¦åˆ°è¡—ä¸Šè‚¯å®šæ¯”å°åŒ—å¸‚çš„æˆ¿å­å»åˆ°è¡—ä¸Šé‚„è¦é ï¼Œé€™å°±æ˜¯éƒŠå€è·Ÿå¸‚å€çš„å·®åˆ¥ã€‚ä½†æ˜¯é€™æ¨£é‚„æ˜¯æœƒæœ‰åèª¤ï¼Œä»¥å°åŒ—å¸‚ä¾†èªªåŒ—æŠ•å€å…§æ¹–å€æœ‰å¯èƒ½æœƒæ¯”ä¸­æ­£å€ä¿¡ç¾©å€é‚„è¦ä¾†çš„é ï¼Œä¹Ÿå°±æ˜¯èªªåŸå¸‚å…§éƒ¨ä¹Ÿæœƒå­˜åœ¨è‘—å¾ˆå¤§çš„å·®ç•°ã€‚ä¸‹ä¸€æ¬¡æˆ‘æœ‰å¯èƒ½æœƒé‡å°é€™å€‹è®Šæ•¸å–®ç¨å»ºä¸€å€‹æ¨¡å‹ä¾†ä¼°è¨ˆå®ƒçš„éºæ¼å€¼ã€‚
 
 ```{r LotFrontage_plot,fig.height = 10, fig.width = 14}
 all %>% ggplot( aes(x=as.factor(Neighborhood), y=LotFrontage)) +
@@ -381,10 +381,10 @@ all %>% ggplot( aes(x=as.factor(Neighborhood), y=LotFrontage)) +
         panel.grid.major=element_line(colour=NA)) 
 ```
 
-ÂÅ¦â¬O¤¤¦ì¼Æ¡A©@°Ø¦â¬O¼Ğ·Ç®t¡C±q¹Ï¤W¥i¥H¬İ¥X³¡¤À«°Âí¸ò«°Âí¥H¤Î°Ï°ì¸ò°Ï°ì¤§¶¡¦s¦bµÛ¤W­z©ÒÁ¿ªº®t²§¡C
+è—è‰²æ˜¯ä¸­ä½æ•¸ï¼Œå’–å•¡è‰²æ˜¯æ¨™æº–å·®ã€‚å¾åœ–ä¸Šå¯ä»¥çœ‹å‡ºéƒ¨åˆ†åŸé®è·ŸåŸé®ä»¥åŠå€åŸŸè·Ÿå€åŸŸä¹‹é–“å­˜åœ¨è‘—ä¸Šè¿°æ‰€è¬›çš„å·®ç•°ã€‚
 
 ```{r LotFrontage}
-#§Q¥Îdplyrµ²¦Xifelse¶i¦æ¦V¶q¦¡¶ñ¸É
+#åˆ©ç”¨dplyrçµåˆifelseé€²è¡Œå‘é‡å¼å¡«è£œ
 all %<>% group_by(Neighborhood) %>% 
          mutate(LotFrontage = ifelse(is.na(LotFrontage),
                                      median(LotFrontage,na.rm = T),
@@ -394,18 +394,18 @@ all %<>% group_by(Neighborhood) %>%
 
 
 ####LotShape
-¨S¦³NA
+æ²’æœ‰NA
 
 * Reg  Regular 
 * IR1  Slightly irregular
 * IR2  Moderately Irregular
 * IR3  Irregular
 
-À³¸Ó¬O¦³¦¸§ÇªºÅÜ¼Æ¡A§â¥¦Âà¦¨¼Æ­ÈÅÜ¼Æ¡C
+æ‡‰è©²æ˜¯æœ‰æ¬¡åºçš„è®Šæ•¸ï¼ŒæŠŠå®ƒè½‰æˆæ•¸å€¼è®Šæ•¸ã€‚
 
 ```{r LotShape}
 table(all$LotShape)
-#±N¨äÂà´«¬°¼Æ¦r
+#å°‡å…¶è½‰æ›ç‚ºæ•¸å­—
 all$LotShape<-as.integer(revalue(all$LotShape,
                                  c('IR3'=0, 'IR2'=1,
                                    'IR1'=2, 'Reg'=3)))
@@ -414,7 +414,7 @@ table(all$LotShape)
 
 
 ####LotConfig
-¨S¦³NA
+æ²’æœ‰NA
 
 * Inside   Inside lot
 * Corner   Corner lot
@@ -422,7 +422,7 @@ table(all$LotShape)
 * FR2  Frontage on 2 sides of property
 * FR3  Frontage on 3 sides of property
 
-À³¸Ó¤£¬O¦³¦¸§ÇªºÅÜ¼Æ¡A§â¥¦Âà¦¨factor¡C
+æ‡‰è©²ä¸æ˜¯æœ‰æ¬¡åºçš„è®Šæ•¸ï¼ŒæŠŠå®ƒè½‰æˆfactorã€‚
 
 ```{r LotConfig}
 all$LotConfig %<>% as.factor()
@@ -433,5 +433,3 @@ table(all$LotConfig)
 
 ###Garage
 ####GarageYrBlt
-
-

@@ -1,6 +1,5 @@
 library(knitr)
 library(ggplot2)
-library(plyr)
 library(dplyr)
 library(corrplot)
 library(caret)
@@ -12,7 +11,6 @@ library(randomForest)
 library(psych)
 library(xgboost)
 library(magrittr)
-library(data.table)
 library(stringr)
 
 options(scipen = 999)
@@ -114,7 +112,10 @@ table(all$PoolQC)
 all[all$PoolQC != 0,c("SalePrice","PoolQC","PoolArea","OverallQual")]
 
 all %>% filter(!(is.na(SalePrice)) & PoolQC != 0) %>% 
-  ggplot(aes(x = OverallQual, y = SalePrice ,color = as.factor(PoolQC) ,alpha = PoolArea)) +
+  ggplot(aes(x = OverallQual, 
+             y = SalePrice,
+             color = as.factor(PoolQC),
+             alpha = PoolArea)) +
   geom_point(size = 10) +
   theme_bw() + #去掉背景色
   theme(panel.grid=element_blank(),  #去掉網線
@@ -133,7 +134,7 @@ all[all$PoolArea > 0,] %>%
              size = 10,color = 'steelblue') +
   geom_text(aes(label = ifelse(all[all$PoolArea > 0,"PoolArea"]> 0,
                                rownames(all[all$PoolArea > 0,]),
-                               "")),nudge_y = 25)  +
+                               "")),nudge_y = 40)  +
   theme_bw() + #去掉背景色
   theme(panel.grid=element_blank(),  #去掉網線
         panel.border=element_blank(),#去掉邊線
@@ -188,7 +189,6 @@ all %>% filter(!(is.na(SalePrice))) %>%
                     ymin=120000, ymax=175000)
 #Fence----
 all$Fence[is.na(all$Fence)] <- 'None'
-table(all$Fence)
 all %>% filter(!(is.na(SalePrice))) %>%
   ggplot(aes(x=Fence, y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2')+
@@ -210,10 +210,10 @@ na_col[names(na_col) %>% str_detect("Fireplace") %>% which]
 
 #FireplaceQu
 all$FireplaceQu[is.na(all$FireplaceQu)] <- 'None'
-all$FireplaceQu<-as.integer(plyr::revalue(all$FireplaceQu,
-                                          c('None' = 0, 'Po' = 1, 
-                                            'Fa' = 2, 'TA' = 3,
-                                            'Gd' = 4, 'Ex' = 5)))
+all$FireplaceQu <- as.integer(plyr::revalue(all$FireplaceQu,
+                                            c('None' = 0, 'Po' = 1, 
+                                              'Fa' = 2, 'TA' = 3,
+                                              'Gd' = 4, 'Ex' = 5)))
 all %>% filter(!(is.na(SalePrice))) %>%
   ggplot(aes(x = FireplaceQu, y = SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2')+
@@ -262,31 +262,10 @@ all %<>% group_by(Neighborhood) %>%
                                      median(LotFrontage,na.rm = T),
                                      LotFrontage)) %>% 
          as.data.frame()
-#dplyr 測試時間0.00-0.02
-#b <- all
-#system.time(
-#b <- b %>% group_by(Neighborhood) %>% 
-#        mutate(LotFrontage = ifelse(is.na(LotFrontage),
-#                                    median(LotFrontage,na.rm = T),
-#                                    LotFrontage))
-#)
-#rm(b)
-#迴圈 測試時間0.06-0.08
-#b <- all
-#system.time(
-#for (i in 1:nrow(b)){
-#  if(is.na(b$LotFrontage[i])){
-#    b$LotFrontage[i] <- as.integer(median(b$LotFrontage[b$Neighborhood==b$Neighborhood[i]], na.rm=TRUE)) 
-#  }
-#}
-#)
-#rm(b)
+
 
 #LotShape: General shape of property
-#將其轉換為數字
-#all$LotShape<-as.integer(plyr::revalue(all$LotShape,
-                                       #c('IR3'=0, 'IR2'=1,
-                                         #'IR1'=2, 'Reg'=3)))
+
 all %>% filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=LotShape, y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
@@ -318,10 +297,7 @@ table(all$LotConfig)
 
 #Garage---- 
 #GarageYrBlt: Year garage was built 
-#將車庫建造年的NA值改成YearBuilt的年份,NA值有可能是因為該房子沒有車庫
-#將車庫建造年的NA值改成YearBuilt的年份的主要原因類似於YearRemodAdd
-#在說明文件裡面YearRemodAdd: Remodel date (same as construction date if no remodeling or additions)
-#如果房子沒有改建過YearRemodAdd則跟YearBuilt一樣
+
 names(all)[names(all) %>% str_detect("Garage") %>% which]
 na_col[names(na_col) %>% str_detect("Garage") %>% which]
 
@@ -329,7 +305,8 @@ na_col[names(na_col) %>% str_detect("Garage") %>% which]
 all$GarageYrBlt[is.na(all$GarageYrBlt)] <- all$YearBuilt[is.na(all$GarageYrBlt)]
 #GarageCars & GarageArea
 all[!is.na(all$GarageType) & is.na(all$GarageFinish),
-    c('GarageCars', 'GarageArea', 'GarageType', 'GarageCond', 'GarageQual', 'GarageFinish')]
+    c('GarageCars', 'GarageArea', 'GarageType',
+      'GarageCond', 'GarageQual', 'GarageFinish')]
 
 #看起來2127似乎是有車庫,2577沒有,那就把2577改成沒有車庫,2127的GarageCond	GarageQual	GarageFinish
 #的三個NA值改成該變數最多的值
@@ -343,6 +320,13 @@ all[2127,
 all$GarageCars[2577] <- 0
 all$GarageArea[2577] <- 0
 all$GarageType[2577] <- NA
+
+all[is.na(all) %>% colSums %>% ">"(0) %>% which] %>% 
+  sapply(is.na) %>% colSums() %>% 
+
+all %>% sapply(is.na) %>% colSums()
+
+
 #GarageType: Garage location
 all$GarageType[is.na(all$GarageType)] <- 'No Garage'
 all$GarageType <- as.factor(all$GarageType)

@@ -17,7 +17,7 @@ knitr::opts_knit$set(root.dir ="D:/r_project/data-analysis/house_sale_predict")
 ```
 
 <style> p{line-height: 2em;}</style>
-#前言
+# 前言
 > Ask a home buyer to describe their dream house, and they probably won't begin with the height of the basement ceiling or the proximity to an east-west railroad. But this playground competition's dataset proves that much more influences price negotiations than the number of bedrooms or a white-picket fence.  
 
 >  With 79 explanatory variables describing (almost) every aspect of residential homes in Ames, Iowa, this competition challenges you to predict the final price of each home.
@@ -25,7 +25,7 @@ knitr::opts_knit$set(root.dir ="D:/r_project/data-analysis/house_sale_predict")
 
 這次的資料是來自於[Kaggle](https://www.kaggle.com/c/house-prices-advanced-regression-techniques)，題目是要預測美國愛荷華州的埃姆斯城市的房價。我會進行資料探索、特徵工程和一些資料視覺，最後我會運用LASSO迴歸、XGBoost和SVM來建模，目前我是第885名(TOP19%)。
 
-#前置作業
+# 前置作業
 
 以下是這次會用到的套件
 ```{r, result = "hide",warning=FALSE,message=FALSE}
@@ -73,8 +73,8 @@ char_var <- sapply(all, is.character) %>% which %>% names()
 cat("數值變數有",length(num_var),"個",",類別變數有",length(char_var),"個")
 ```
 
-#探索資料
-##目標變數--銷售價格
+# 探索資料
+## 目標變數--銷售價格
 
 看下圖可以發現我們的目標變數"銷售價格"，是一個明顯的右偏峰態。想一想其實也很合理，市場上絕大多數的消費者都負擔不起昂貴的房子。如果圖形呈現左偏或者常態峰佈，代表該地區房價偏貴，或許是屬於高級住宅區也不一定。後面我會將銷售價格做log處理將數據轉換成比較符合常態分佈。
 ```{r saleprice plot}
@@ -87,21 +87,33 @@ all %>% filter(!(is.na(SalePrice))) %>%
   theme_bw() + #去掉背景色
   theme(panel.grid=element_blank(),  #去掉網線
         panel.border=element_blank(),#去掉邊線
-        axis.line=element_line(size=1,colour="black"))#加深XY線軸
+        axis.line=element_line(size=1,colour="black")) +
+  annotation_custom(tableGrob(summary(all$SalePrice) %>%
+                                "["(1:3) %>% as.matrix() %>% 
+                                t,rows = NULL), 
+                    xmin=400000, xmax=700000, 
+                    ymin=75, ymax=150)+
+  annotation_custom(tableGrob(summary(all$SalePrice) %>% 
+                                round() %>%
+                                "["(4:6) %>% 
+                                as.matrix() %>% 
+                                t,rows = NULL), 
+                    xmin=400000, xmax=700000, 
+                    ymin=75, ymax=100)
 
 
 summary(all$SalePrice)
 
 ```
 
-##數值變數和目標變數的相關性
+## 數值變數和目標變數的相關性
 探索資料第二個步驟就是觀察各個變數和目標變數之間的相關性了，好讓我之後特徵工程比較好處理。
 
 ```{r corplot, fig.height = 10, fig.width = 14}
 cor_numvar <- cor(all[, num_var], use="pairwise.complete.obs")
 #排序之後挑出去相關性絕對值大於0.4的
 cor_sortname <- sort(cor_numvar[,'SalePrice'], decreasing = TRUE) %>% 
-                 as.matrix() %>% apply(1, function(x) abs(x)>0.15) %>% 
+                 as.matrix() %>% apply(1, function(x) abs(x)>0.4) %>% 
                  which() %>% names()
 cor_numvar_sort <- cor_numvar[cor_sortname, cor_sortname]
 #相關性視覺化
@@ -114,7 +126,7 @@ corrplot.mixed(cor_numvar_sort, tl.col="black", tl.pos = "lt")
 另外，變數間的共線性問題也要處理。例如GargeCars和GargeArea(0.89)、X1stFlrSF和TotalBsmtSF(0.8)、TotRmsAbvGrd和GrLivArea(0.81)、GarageYrBlt和YearBuilt(0.83)等等，這些會在後面特徵工程的部分進行處理。
 
 
-##OverallQual
+## OverallQual
 ```{r OverallQual_visual, fig.height = 10, fig.width = 14}
 grid.arrange(all %>% filter(!(is.na(SalePrice))) %>% 
               ggplot(aes(x=factor(OverallQual), y=SalePrice))+
@@ -134,7 +146,7 @@ grid.arrange(all %>% filter(!(is.na(SalePrice))) %>%
 ```
 OverallQual和銷售價格明顯的呈現正相關，而且OverallQual越高銷售價格距離也越大(離散程度)。從箱型圖上看來，沒有差異很大的離群值要踢掉，比較明顯的大概是OverallQual第4和第10。
 
-##GrLivArea
+## GrLivArea
 ```{r GrLivArea, fig.height = 10, fig.width = 14}
 all %>% filter(!(is.na(SalePrice))) %>% 
   ggplot(aes(x=GrLivArea, y=SalePrice))+
@@ -142,7 +154,12 @@ all %>% filter(!(is.na(SalePrice))) %>%
   geom_smooth(method = "lm", se=FALSE, color="deeppink3") +
   scale_y_continuous(breaks= seq(0, 800000, by=100000), 
                      labels = comma) +
-  geom_text_repel(aes(label = ifelse(all$GrLivArea[!is.na(all$SalePrice)]>4500, rownames(all), '')))
+  geom_text_repel(aes(label = ifelse(all$GrLivArea[!is.na(all$SalePrice)]>4500, 
+                                     rownames(all), "")))+
+  theme_bw() + #去掉背景色
+  theme(panel.grid=element_blank(),  #去掉網線
+        panel.border=element_blank(),#去掉邊線
+        axis.line=element_line(size=1,colour="black"))
 
 
 ```
@@ -157,24 +174,26 @@ all[c(524, 1299), c('SalePrice', 'GrLivArea', 'OverallQual')]
 
 524和1299這對兄弟超奇怪的，OverallQual的分數為10、GrLivArea又是屬於前段班，照理來說房價應該會貴到天際才對。但是我在這邊暫時先不會踢掉這兩筆資料，他們會列入可疑名單並在後續特徵工程的時候會再拿出來討論，畢竟貿然地踢掉資料是一個奢侈又高風險的行為。
 
-##觀察NA值
+## 觀察NA值
 來看看哪些變數包含NA值。
 
 ```{r NA, fig.height = 10, fig.width = 14}
-all[is.na(all) %>% colSums %>% ">"(0) %>% which] %>% 
-  sapply(is.na) %>% colSums() %>% sort(decreasing = TRUE) 
+na_col <- all[is.na(all) %>% colSums %>% ">"(0) %>% which] %>% 
+   sapply(is.na) %>% 
+  colSums() %>% 
+  sort(decreasing = TRUE) 
 ```
 
 我將會在後面特徵工程時連同重新編碼、轉換變數時一併處理NA值。
 
-#特徵工程
-##資料清洗
-###Pool
-```{r}
-names(all)[names(all) %>% str_detect("Pool") %>% which]
+# 特徵工程
+## 資料清洗
+### Pool
+```{r pool1}
+na_col[names(na_col) %>% str_detect("Pool") %>% which]
 ```
 
-####PoolQC
+#### PoolQC
 2909個NA  
 PoolQC: Pool quality
 
@@ -185,67 +204,84 @@ PoolQC: Pool quality
 *  NA   No Pool
 
 
-```{r}
-table(all$PoolQC)
-
+```{r poolQC}
 all$PoolQC[is.na(all$PoolQC)] <- 'None'
 all$PoolQC<-as.integer(plyr::revalue(all$PoolQC,
                                      c('None' = 0, 'Po' = 1, 
                                        'Fa' = 2, 'TA' = 3,
                                        'Gd' = 4, 'Ex' = 5)))
+table(all$PoolQC)
+all[all$PoolQC != 0,c("SalePrice","PoolQC","PoolArea","OverallQual")]
+
 all %>% filter(!(is.na(SalePrice)) & PoolQC != 0) %>% 
-  ggplot(aes(x = OverallQual, 
-             y = SalePrice,
+  ggplot(aes(x = OverallQual, y = SalePrice ,
              color = as.factor(PoolQC),
              alpha = PoolArea)) +
-  geom_point(size = 5)
+  geom_point(size = 10) +
+  theme_bw() + #去掉背景色
+  theme(panel.grid=element_blank(),  #去掉網線
+        panel.border=element_blank(),#去掉邊線
+        axis.line=element_line(size=1,colour="black"))
 
 ```
 
 有游泳池的房子只有10間，圖形上顯示Pool相關變數似乎不那麼顯著影響房價，右上角的資料應該有其他變數影響。後面特徵工程的時候我或許會把這類別變數轉成是否有游泳池就好，評級可能不太需要。在這邊我先把NA值轉成NO，並且把它轉成類別變數。
 
-####PoolArea
+#### PoolArea
 另一個跟Pool有關的是PoolArea:
 
-```{r}
+```{r PoolArea}
 table(all$PoolArea != 0 )
 ```
 
 竟然有13個值(PoolQC只有10個)。
 
-```{r}
+```{r PoolArea2}
 all[all$PoolArea>0 & all$PoolQC == 0, c('SalePrice','PoolArea', 'PoolQC', 'OverallQual')]
 ```
 
 這三個疑似缺漏值的資料出現在要預測的資料集裡面，我們也不能隨便亂刪掉，只好透過觀察現有的10筆資料來填補PoolQC回去。
 
-```{r}
-all[all$PoolArea > 0,] %>% ggplot(aes(x = OverallQual,y = PoolArea,color = PoolQC)) + 
-  geom_point(size = 5) +
-  geom_text_repel(aes(label = ifelse(all[all$PoolArea > 0,"PoolArea"]> 0,
-                                     rownames(all[all$PoolArea > 0,]),
-                                     "")))
+```{r PoolArea3}
+all[all$PoolArea > 0,] %>% 
+  ggplot(aes(x = OverallQual,y = PoolArea)) + 
+  geom_point(aes(alpha = PoolQC),
+             size = 10,color = 'steelblue') +
+  geom_text(aes(label = ifelse(all[all$PoolArea > 0,"PoolArea"]> 0,
+                               rownames(all[all$PoolArea > 0,]),
+                               "")),nudge_y = 40)  +
+  theme_bw() + #去掉背景色
+  theme(panel.grid=element_blank(),  #去掉網線
+        panel.border=element_blank(),#去掉邊線
+        axis.line=element_line(size=1,colour="black"))
 ```
 
 
 透過上圖我會把這三個值都填2回去比較合理。
 
-```{r}
+```{r PoolArea4}
 all$PoolQC[2421] <- 2
-all$PoolQC[2504] <- 2
+all$PoolQC[2504] <- 3
 all$PoolQC[2600] <- 2
-all[all$PoolArea > 0,] %>% ggplot(aes(x = OverallQual,y = PoolArea,color = PoolQC)) + 
-  geom_point(size = 5) +
-  geom_text_repel(aes(label = ifelse(all[all$PoolArea > 0,"PoolArea"]> 0,
-                                     rownames(all[all$PoolArea > 0,]),
-                                     "")))
+all[all$PoolArea > 0,] %>% 
+  ggplot(aes(x = OverallQual,y = PoolArea)) + 
+  geom_point(aes(alpha = PoolQC),
+             size = 10,color = 'steelblue') +
+  geom_text(aes(label = ifelse(all[all$PoolArea > 0,"PoolArea"]> 0,
+                               rownames(all[all$PoolArea > 0,]),
+                               "")),nudge_y = 25)  +
+  theme_bw() + #去掉背景色
+  theme(panel.grid=element_blank(),  #去掉網線
+        panel.border=element_blank(),#去掉邊線
+        axis.line=element_line(size=1,colour="black"))
 
 ```
 
 
-###Miscellaneous Feature
-```{r}
+### Miscellaneous Feature
+```{r Miscellaneous Feature}
 names(all)[names(all) %>% str_detect("Mis") %>% which]
+na_col[names(na_col) %>% str_detect("Mis") %>% which]
 ```
 
 2814個NA
@@ -267,16 +303,23 @@ all %>% filter(!(is.na(SalePrice))) %>%
   ggplot(aes(x=MiscFeature, y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
   scale_y_continuous(breaks= seq(0, 800000, by=100000), labels = comma) +
-  geom_label(stat = "count", aes(label = ..count.., y = ..count..))
-table(all$MiscFeature)
+  geom_label(stat = "count", aes(label = ..count.., y = ..count..))+
+  theme_bw() + #去掉背景色
+  theme(panel.grid=element_blank(),  #去掉網線
+        panel.border=element_blank(),#去掉邊線
+        axis.line=element_line(size=1,colour="black"))+
+  annotate('text',x = 2.4,y = 245000,label = '總共')+
+  annotation_custom(tableGrob(table(all$MiscFeature) %>% as.data.frame()%>% t ,rows = NULL), 
+                    xmin=0.75, xmax=4, 
+                    ymin=180000, ymax=250000)
 
 ```
 
 
 看起來MiscFeature這類別變數沒甚麼相關，絕大多數都是None居多。第二多的shed也沒有明顯和None有差異，差異比較大的TenC和Othr佔的件數又少很多。
 
-####MiscVal
-```{r}
+#### MiscVal
+```{r MiscFeature1}
 all %>% filter(!(MiscFeature %in% "None") & MiscVal == 0) %>% select("Id","MiscVal","MiscFeature")
 ```
 
@@ -285,7 +328,7 @@ all %>% filter(!(MiscFeature %in% "None") & MiscVal == 0) %>% select("Id","MiscV
 
 
 
-###Alley
+### Alley
 2721個NA
 Alley: Type of alley access to property
 
@@ -302,11 +345,18 @@ all %>% filter(!(is.na(SalePrice))) %>%
   ggplot(aes(x=Alley, y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2')+
   scale_y_continuous(breaks= seq(0, 200000, by=50000), labels = comma) + 
-  geom_label(stat = "count",aes(label = ..count..,y = ..count..))
-table(all$Alley)
+  geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
+  theme_bw() + #去掉背景色
+  theme(panel.grid=element_blank(),  #去掉網線
+        panel.border=element_blank(),#去掉邊線
+        axis.line=element_line(size=1,colour="black"))+
+  annotate('text',x = 0.9 ,y = 175000  ,label = '總共')+
+  annotation_custom(tableGrob(table(all$Alley) %>% as.data.frame() ,rows = NULL,cols = NULL), 
+                    xmin=0.25, xmax = 1.5, 
+                    ymin=120000, ymax=175000)
 ```
 
-###Fence
+### Fence
 2348個NA
 Fence: Fence quality
 
@@ -316,26 +366,34 @@ Fence: Fence quality
 * MnWw Minimum Wood/Wire
 * NA   No Fence
 
-```{r}
+```{r Fence}
 all$Fence[is.na(all$Fence)] <- 'None'
-table(all$Fence)
 all %>% filter(!(is.na(SalePrice))) %>%
   ggplot(aes(x=Fence, y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2')+
   scale_y_continuous(labels = comma) + 
-  geom_label(stat = "count",aes(label = ..count..,y = ..count..))
+  geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
+  theme_bw() + #去掉背景色
+  theme(panel.grid=element_blank(),  #去掉網線
+        panel.border=element_blank(),#去掉邊線
+        axis.line=element_line(size=1,colour="black"))+
+  annotate('text',x = 3 ,y = 60000  ,label = '總共')+
+  annotation_custom(tableGrob(table(all$Fence) %>% as.data.frame() %>% t() ,rows = NULL), 
+                    xmin=1.5, xmax = 4.5, 
+                    ymin=5000, ymax=75000)
 all$Fence <- as.factor(all$Fence)
 
 ```
 
 看起來沒有明顯的次序關係，沒有Fence的房屋價格比較高，所以轉成factor。
 
-###Fireplace
-```{r}
+### Fireplace
+```{r Fireplace}
 names(all)[names(all) %>% str_detect("Fireplace") %>% which]
+na_col[names(na_col) %>% str_detect("Fireplace") %>% which]
 ```
 
-####FireplaceQu
+#### FireplaceQu
 1420個NA
 * Ex   Excellent - Exceptional Masonry Fireplace
 * Gd   Good - Masonry Fireplace in main level
@@ -352,22 +410,43 @@ all$FireplaceQu<-as.integer(plyr::revalue(all$FireplaceQu,
                                           c('None' = 0, 'Po' = 1, 
                                             'Fa' = 2, 'TA' = 3,
                                             'Gd' = 4, 'Ex' = 5)))
-table(all$FireplaceQu)
-
+all %>% filter(!(is.na(SalePrice))) %>%
+  ggplot(aes(x = FireplaceQu, y = SalePrice)) +
+  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2')+
+  scale_y_continuous(labels = comma) + 
+  geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
+  theme_bw() + #去掉背景色
+  theme(panel.grid=element_blank(),  #去掉網線
+        panel.border=element_blank(),#去掉邊線
+        axis.line=element_line(size=1,colour="black"))+
+  annotate('text',x = 2 ,y = 290000  ,label = '總共')+
+  annotation_custom(tableGrob(table(all$FireplaceQu) %>% as.data.frame() %>% t() ,rows = NULL), 
+                    xmin=0, xmax = 4, 
+                    ymin=220000, ymax=280000)
 ```
 
-####Fireplaces
-```{r}
+#### Fireplaces
+```{r Fireplaces}
 table(all$Fireplaces)
-sum(table(all$Fireplaces))
+all %>% filter(!(is.na(SalePrice))) %>%
+  ggplot(aes(x = Fireplaces, y = SalePrice)) +
+  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2')+
+  scale_y_continuous(labels = comma) + 
+  geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
+  theme_bw() + #去掉背景色
+  theme(panel.grid=element_blank(),  #去掉網線
+        panel.border=element_blank(),#去掉邊線
+        axis.line=element_line(size=1,colour="black"))
 ```
 
-###Lot
+
+### Lot
 ```{r Lot}
 names(all)[names(all) %>% str_detect("Lot") %>% which]
+na_col[names(na_col) %>% str_detect("Lot") %>% which]
 ```
 
-####LotFrontage
+#### LotFrontage
 LotFrontage: Linear feet of street connected to property
 486個NA
 初步建模我先根據房屋所在地區的中位數來填補。為什麼呢？拿台灣來說吧，嘉義縣的房子大部分來說要到街上肯定比台北市的房子去到街上還要遠，這就是郊區跟市區的差別。但是這樣還是會有偏誤，以台北市來說北投區內湖區有可能會比中正區信義區還要來的遠，也就是說城市內部也會存在著很大的差異。下一次我有可能會針對這個變數單獨建一個模型來估計它的遺漏值。
@@ -393,7 +472,7 @@ all %<>% group_by(Neighborhood) %>%
 ```
 
 
-####LotShape
+#### LotShape
 沒有NA
 
 * Reg  Regular 
@@ -401,19 +480,27 @@ all %<>% group_by(Neighborhood) %>%
 * IR2  Moderately Irregular
 * IR3  Irregular
 
-應該是有次序的變數，把它轉成數值變數。
+看起來應該是有次序的變數，但是視覺化後卻不是這樣。
 
 ```{r LotShape}
 table(all$LotShape)
 #將其轉換為數字
-all$LotShape<-as.integer(revalue(all$LotShape,
-                                 c('IR3'=0, 'IR2'=1,
-                                   'IR1'=2, 'Reg'=3)))
-table(all$LotShape)
+all %>% filter(!(is.na(SalePrice))) %>% 
+  ggplot( aes(x=LotShape, y=SalePrice)) +
+  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
+  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3') +
+  scale_y_continuous(labels = comma) + 
+  geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
+  theme_bw()+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        panel.grid.major=element_line(colour=NA)) 
+#轉為factor
+all$LotShape %<>% as.factor()
+
 ```
 
 
-####LotConfig
+#### LotConfig
 沒有NA
 
 * Inside   Inside lot
@@ -431,5 +518,62 @@ table(all$LotConfig)
 ```
 
 
-###Garage
-####GarageYrBlt
+### Garage
+
+```{r Garage}
+names(all)[names(all) %>% str_detect("Garage") %>% which]
+na_col[names(na_col) %>% str_detect("Garage") %>% which]
+```
+
+#### GarageYrBlt
+
+GarageYrBlt: Year garage was built 
+
+這邊我會將車庫建造年的NA值改成YearBuilt的年份,NA值有可能是因為該房子沒有車庫,改成YearBuilt的理由類似YearRemodAdd.在說明文件裡面YearRemodAdd: Remodel date (same as construction date if no remodeling or additions).
+
+```{r GarageYrBlt}
+all$GarageYrBlt[is.na(all$GarageYrBlt)] <- all$YearBuilt[is.na(all$GarageYrBlt)]
+
+```
+
+
+#### GarageCars & GarageArea
+
+```{r GarageCars & GarageArea}
+all[!is.na(all$GarageType) & is.na(all$GarageFinish),
+    c('GarageCars', 'GarageArea', 'GarageType',
+      'GarageCond', 'GarageQual', 'GarageFinish')]
+```
+
+看起來2127似乎是有車庫,2577沒有,那就把2577改成沒有車庫,2127的GarageCond	GarageQual	GarageFinish的三個NA值改成該變數最多的值
+
+```{r }
+all$GarageCond[2127] <- names(sort(-table(all$GarageCond)))[1]
+all$GarageQual[2127] <- names(sort(-table(all$GarageQual)))[1]
+all$GarageFinish[2127] <- names(sort(-table(all$GarageFinish)))[1]
+all[2127,
+    c('GarageYrBlt', 'GarageCars', 'GarageArea',
+      'GarageType', 'GarageCond', 'GarageQual', 'GarageFinish')]
+#修改2577
+all$GarageCars[2577] <- 0
+all$GarageArea[2577] <- 0
+all$GarageType[2577] <- NA
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -56,14 +56,15 @@ all %>% filter(!(is.na(SalePrice))) %>%
 
 
 #相關性----
-cor_numvar <- cor(all[, num_var], use="pairwise.complete.obs")
+cor_numvar <- cor(all[, num_var], 
+                  use="pairwise.complete.obs")
 #排序之後挑出去相關性絕對值大於0.4的
 cor_sortname <- sort(cor_numvar[,'SalePrice'], 
                      decreasing = TRUE) %>% 
-  as.matrix() %>% 
-  apply(1, function(x) abs(x)>0.4) %>% 
-  which() %>% 
-  names()
+                as.matrix() %>% 
+                apply(1, function(x) abs(x)>0.4) %>% 
+                which() %>% 
+                names()
 cor_numvar_sort <- cor_numvar[cor_sortname, cor_sortname]
 corrplot.mixed(cor_numvar_sort, tl.col="black", tl.pos = "lt")
 
@@ -837,13 +838,36 @@ CorNumvar_after <- cor(all[, num_var2],
                   use="pairwise.complete.obs") 
 CorSortName_after <- sort(CorNumvar_after[,'SalePrice'], 
                       decreasing = TRUE) %>% 
-  as.matrix() %>% 
-  apply(1, function(x) abs(x)>0.5) %>% 
-  which() %>% 
-  names()
-cor_numvar_sort <- cor_numvar[cor_sortname, cor_sortname]
-corrplot.mixed(cor_numvar_sort, tl.col="black", tl.pos = "lt")
+                     as.matrix() %>% 
+                     apply(1, function(x) abs(x)>0.5) %>% 
+                     which() %>% 
+                     names()
+CorNumvarSort <- CorNumvar_after[CorSortName_after, CorSortName_after]
+corrplot.mixed(CorNumvarSort, tl.col="black", tl.pos = "lt")
+#比較處理過數值之後的相關性
+##這邊沒辦法用grid.arrange,因為corrplot不是grob物件
+##https://stackoverflow.com/questions/53734543/converting-corrplot-output-to-grob
+##這邊有解法,但是暫時先用r base套件來處理
+oldpar <- par()
+par(mfrow = c(1,2))
+corrplot.mixed(cor_numvar_sort,
+               tl.col="black",
+               tl.pos = "lt",
+               tl.cex = 0.7, #標題大小
+               cl.cex = 0.7, #color bar 大小
+               number.cex=0.7,
+               title = 'BEROFE',
+               mar=c(0,0,2,0))
 
+corrplot.mixed(CorNumvarSort, 
+               tl.col="black", 
+               tl.pos = "lt", 
+               tl.cex = 0.7, #標題大小
+               cl.cex = 0.7, #color bar 大小
+               number.cex=0.7,
+               title = 'AFTER',
+               mar=c(0,0,2,0))
+par(oldpar)
 
 
 #Finding variable importance with a quick Random Forest

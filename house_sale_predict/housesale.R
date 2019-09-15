@@ -12,6 +12,9 @@ library(psych)
 library(xgboost)
 library(magrittr)
 library(stringr)
+library(Cairo)
+library(showtext) #ggplot 中文問題
+showtext_auto()
 
 options(scipen = 999)
 setwd("D:/r_project/data-analysis/house_sale_predict")
@@ -870,23 +873,41 @@ corrplot.mixed(CorNumvarSort,
 par(oldpar)
 
 
-#Finding variable importance with a quick Random Forest
+#藉由隨機森林探尋特徵的重要性
 set.seed(2018)
-#前1460個會test data ,79欄為saleprice
-quick_RF <- randomForest(x=all[1:1460,-80], y=all$SalePrice[1:1460], ntree=100,importance=TRUE)
+quick_RF <- randomForest(x=all %>% 
+                            filter(!(is.na(SalePrice))) %>% 
+                            select(-SalePrice,-ID),
+                         
+                         y=all %>% 
+                            filter(!(is.na(SalePrice))) %>% 
+                            "$"(SalePrice),
+                         ntree=100,importance=TRUE)
 imp_RF <- importance(quick_RF)
-imp_DF <- data.frame(Variables = row.names(imp_RF), MSE = imp_RF[,1])
-imp_DF <- imp_DF[order(imp_DF$MSE, decreasing = TRUE),]
+imp_DF <- data.frame(Variables = row.names(imp_RF),
+                     MSE = imp_RF[,1]) %>% 
+          arrange(desc(MSE))
+#imp_DF <- imp_DF[order(imp_DF$MSE, decreasing = TRUE),]
 
-important <- 
-ggplot(imp_DF[1:20,], aes(x=reorder(Variables, MSE), y=MSE, fill=MSE)) + 
-  geom_bar(stat = 'identity') + 
-  labs(x = 'Variables', y= '% increase MSE if variable is randomly permuted') + 
-  coord_flip() + theme(legend.position="none") +
-  theme(axis.text.y = element_text(size = 12,face = 'bold'))
+important <- ggplot(imp_DF[1:30,], 
+                    aes(x=reorder(Variables, MSE), y=MSE, fill=MSE)) + 
+             geom_bar(stat = 'identity') + 
+             scale_y_continuous(labels = function(x)paste0(x,'%')) +
+             labs(x = '變數', 
+                  y= '如果拿掉該變數MSE會提升的%數') + 
+             coord_flip() + 
+             theme(legend.position="none",
+                   axis.text.x = element_text(size = 16,
+                                              face = 'bold'),
+                   axis.text.y = element_text(size = 16,
+                                              face = 'bold'),
+                   axis.title.x = element_text(size = 30,
+                                               face = 'bold'),
+                   axis.title.y = element_text(size = 30,
+                                               face = 'bold')) 
 important
 ##輸出重要性
-CairoPNG('importance.png')
+CairoPNG('output/importance.png',width = 1600, height = 800)
 print(important)
 dev.off()
 

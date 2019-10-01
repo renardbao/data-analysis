@@ -1,6 +1,7 @@
 library(knitr)
 library(ggplot2)
 library(dplyr)
+library(reshape2) #melt dcast 寬長資料互轉
 library(corrplot)
 library(caret)
 library(gridExtra)
@@ -14,6 +15,7 @@ library(magrittr)
 library(stringr)
 library(Cairo)
 library(showtext) #ggplot 中文問題
+source('function.R')
 showtext_auto()
 
 options(scipen = 999)
@@ -877,7 +879,7 @@ par(oldpar)
 set.seed(2018)
 quick_RF <- randomForest(x=all %>% 
                             filter(!(is.na(SalePrice))) %>% 
-                            select(-SalePrice,-ID),
+                            select(-SalePrice,-Id),
                          
                          y=all %>% 
                             filter(!(is.na(SalePrice))) %>% 
@@ -887,10 +889,11 @@ imp_RF <- importance(quick_RF)
 imp_DF <- data.frame(Variables = row.names(imp_RF),
                      MSE = imp_RF[,1]) %>% 
           arrange(desc(MSE))
-#imp_DF <- imp_DF[order(imp_DF$MSE, decreasing = TRUE),]
 
 important <- ggplot(imp_DF[1:30,], 
-                    aes(x=reorder(Variables, MSE), y=MSE, fill=MSE)) + 
+                    aes(x=reorder(Variables, MSE),
+                        y=MSE, 
+                        fill=MSE)) + 
              geom_bar(stat = 'identity') + 
              scale_y_continuous(labels = function(x)paste0(x,'%')) +
              labs(x = '變數', 
@@ -911,35 +914,106 @@ CairoPNG('output/importance.png',width = 1600, height = 800)
 print(important)
 dev.off()
 
-#Above Ground Living Area, and other surface related variables (in square feet)
-grid.arrange(ggplot(data= all, aes(x=GrLivArea)) +
-               geom_density() , 
-             ggplot(data=all, aes(x=as.factor(TotRmsAbvGrd))) +
-               geom_histogram(stat='count') ,
-             ggplot(data= all, aes(x=X1stFlrSF)) +
-               geom_density() ,
-             ggplot(data= all, aes(x=X2ndFlrSF)) +
-               geom_density() , 
-             ggplot(data= all, aes(x=TotalBsmtSF)) +
-               geom_density() ,
-             ggplot(data= all[all$LotArea<100000,], aes(x=LotArea)) +
-               geom_density() , 
-             ggplot(data= all, aes(x=LotFrontage)) +
-               geom_density(), 
-             ggplot(data= all, aes(x=LowQualFinSF)) +
-               geom_histogram() , 
-             layout_matrix = matrix(c(1,2,5,3,4,8,6,7),4,2,byrow=TRUE))
+#和GrLivArea相關特徵
+
+
+
+grid.arrange(all %>% ggplot() +
+               geom_density(aes(x = GrLivArea),
+                            fill = 'pink',color = 'deeppink') + 
+               GGvisualize_theme(),
+             all %>% ggplot() +
+               geom_density(aes(x = X1stFlrSF),
+                            fill = 'pink',color = 'deeppink') + 
+               GGvisualize_theme(),
+             all %>% ggplot() +
+               geom_density(aes(x = X2ndFlrSF),
+                            fill = 'pink',color = 'deeppink') + 
+               GGvisualize_theme(),
+             all %>% filter() %>% ggplot()+
+               geom_density(aes(x = LowQualFinSF),
+                            fill = 'pink',color = 'deeppink') + 
+               GGvisualize_theme(),
+             all %>% ggplot() +
+               geom_density(aes(x = TotalBsmtSF),
+                            fill = 'pink',color = 'deeppink') + 
+               GGvisualize_theme(),
+             all %>% filter(LotArea< 50000) %>% ggplot()+
+               geom_density(aes(x = LotArea) ,
+                            fill = 'pink',color = 'deeppink') + 
+               GGvisualize_theme(),
+             all %>% ggplot()+
+               geom_density(aes(x = LotFrontage),
+                            fill = 'pink',color = 'deeppink') + 
+               GGvisualize_theme(),
+            
+             all %>% ggplot() +
+               geom_density(aes(x = TotRmsAbvGrd),
+                            fill = 'pink',color = 'deeppink') + 
+               scale_x_continuous(breaks = seq(0,max(all$TotRmsAbvGrd))) + 
+               GGvisualize_theme(),
+             layout_matrix = matrix(c(1,2,3,4,5,8,6,7),4,2,byrow=TRUE))
+
+grid.arrange(all %>% ggplot() +
+               geom_point(aes(x = GrLivArea ,y=SalePrice),
+                            fill = 'pink',color = 'deeppink') + 
+               GGvisualize_theme(),
+             all %>% ggplot() +
+               geom_point(aes(x = X1stFlrSF ,y=SalePrice),
+                            fill = 'pink',color = 'deeppink') + 
+               GGvisualize_theme(),
+             all %>% ggplot() +
+               geom_point(aes(x = X2ndFlrSF ,y=SalePrice),
+                            fill = 'pink',color = 'deeppink') + 
+               GGvisualize_theme(),
+             all %>% ggplot() +
+               geom_point(aes(x = TotalBsmtSF ,y=SalePrice),
+                            fill = 'pink',color = 'deeppink') + 
+               GGvisualize_theme(),
+             all %>% filter(LotArea< 50000) %>% ggplot()+
+               geom_point(aes(x = LotArea ,y=SalePrice) ,
+                            fill = 'pink',color = 'deeppink') + 
+               GGvisualize_theme(),
+             all %>% ggplot()+
+               geom_point(aes(x = LotFrontage ,y=SalePrice),
+                            fill = 'pink',color = 'deeppink') + 
+               GGvisualize_theme(),
+             all %>% ggplot()+
+               geom_point(aes(x = LowQualFinSF ,y=SalePrice),
+                            fill = 'pink',color = 'deeppink') + 
+               GGvisualize_theme(),
+             all %>% ggplot() +
+               geom_point(aes(x = TotRmsAbvGrd ,y=SalePrice),
+                          fill = 'pink',color = 'deeppink') + 
+               GGvisualize_theme(),
+             layout_matrix = matrix(c(1,2,3,4,5,8,6,7),4,2,byrow=TRUE))
+
+
+
+
+
 #GrLivArea貌似為X1stFlrSF X2ndFlrSF LowQualFinSF加總起來
 cor(all$GrLivArea, (all$X1stFlrSF + all$X2ndFlrSF + all$LowQualFinSF))
 head(all[all$LowQualFinSF>0, c('GrLivArea', 'X1stFlrSF', 'X2ndFlrSF', 'LowQualFinSF')])
 
 #The most important categorical variable; Neighborhood
+var_GGvisualize(all,"geom_bar",aes = "x=Neighborhood,y=SalePrice",
+                other_par = "fill = 'steelblue',stat='summary', fun.y = 'median'") + 
+  scale_y_continuous(breaks= seq(0, 800000, by=50000),
+                     labels = comma) +
+  geom_label(stat = "count", 
+             aes(label = ..count.., y = ..count..), 
+             size=3) +
+  geom_hline(yintercept=163000, 
+             linetype="dashed", 
+             color = "red")
+
 grid.arrange(ggplot(all[!is.na(all$SalePrice),], aes(x=Neighborhood, y=SalePrice)) +
                geom_bar(stat='summary', fun.y = "median", fill='blue') +
                theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
                scale_y_continuous(breaks= seq(0, 800000, by=50000), labels = comma) +
                geom_label(stat = "count", aes(label = ..count.., y = ..count..), size=3) +
-               geom_hline(yintercept=163000, linetype="dashed", color = "red"), #dashed line is median SalePrice 
+               geom_hline(yintercept=163000, linetype="dashed", color = "red"), #銷售價格中位數 
              ggplot(data=all, aes(x=Neighborhood)) +
                geom_histogram(stat='count')+
                geom_label(stat = "count", aes(label = ..count.., y = ..count..), size=3)+

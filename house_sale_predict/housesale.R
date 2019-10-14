@@ -915,9 +915,6 @@ print(important)
 dev.off()
 
 #和GrLivArea相關特徵
-
-
-
 grid.arrange(all %>% ggplot() +
                geom_density(aes(x = GrLivArea),
                             fill = 'pink',color = 'deeppink') + 
@@ -957,18 +954,36 @@ grid.arrange(all %>% ggplot() +
 grid.arrange(all %>% ggplot() +
                geom_point(aes(x = GrLivArea ,y=SalePrice),
                             fill = 'pink',color = 'deeppink') + 
+               scale_x_continuous(breaks = seq(0,6000,1000),limits = c(0,7000)) + 
+               scale_y_continuous(limits = c(0,700000)) + 
                GGvisualize_theme(),
              all %>% ggplot() +
                geom_point(aes(x = X1stFlrSF ,y=SalePrice),
                             fill = 'pink',color = 'deeppink') + 
+               scale_x_continuous(breaks = seq(0,6000,1000),limits = c(0,7000)) + 
+               scale_y_continuous(limits = c(0,700000)) + 
                GGvisualize_theme(),
-             all %>% ggplot() +
+             all %>% filter(X2ndFlrSF != 0 ) %>% 
+               ggplot() +
                geom_point(aes(x = X2ndFlrSF ,y=SalePrice),
                             fill = 'pink',color = 'deeppink') + 
+               scale_x_continuous(breaks = seq(0,6000,1000),limits = c(0,7000)) + 
+               scale_y_continuous(limits = c(0,700000)) + 
+               GGvisualize_theme(),
+             all %>% filter(LowQualFinSF != 0 ) %>% 
+               ggplot()+
+               geom_point(aes(x = LowQualFinSF ,y=SalePrice),
+                          fill = 'pink',color = 'deeppink') + 
+               scale_x_continuous(breaks = seq(0,6000,1000),limits = c(0,7000)) + 
+               scale_y_continuous(limits = c(0,700000)) + 
                GGvisualize_theme(),
              all %>% ggplot() +
                geom_point(aes(x = TotalBsmtSF ,y=SalePrice),
                             fill = 'pink',color = 'deeppink') + 
+               GGvisualize_theme(),
+             all %>% ggplot() +
+               geom_point(aes(x = TotRmsAbvGrd ,y=SalePrice),
+                          fill = 'pink',color = 'deeppink') + 
                GGvisualize_theme(),
              all %>% filter(LotArea< 50000) %>% ggplot()+
                geom_point(aes(x = LotArea ,y=SalePrice) ,
@@ -978,45 +993,51 @@ grid.arrange(all %>% ggplot() +
                geom_point(aes(x = LotFrontage ,y=SalePrice),
                             fill = 'pink',color = 'deeppink') + 
                GGvisualize_theme(),
-             all %>% ggplot()+
-               geom_point(aes(x = LowQualFinSF ,y=SalePrice),
-                            fill = 'pink',color = 'deeppink') + 
-               GGvisualize_theme(),
-             all %>% ggplot() +
-               geom_point(aes(x = TotRmsAbvGrd ,y=SalePrice),
-                          fill = 'pink',color = 'deeppink') + 
-               GGvisualize_theme(),
-             layout_matrix = matrix(c(1,2,3,4,5,8,6,7),4,2,byrow=TRUE))
+             
+             layout_matrix = matrix(c(1,2,4,3,5,6,7,8),4,2,byrow=TRUE))
 
 
 
 
 
-#GrLivArea貌似為X1stFlrSF X2ndFlrSF LowQualFinSF加總起來
-cor(all$GrLivArea, (all$X1stFlrSF + all$X2ndFlrSF + all$LowQualFinSF))
-head(all[all$LowQualFinSF>0, c('GrLivArea', 'X1stFlrSF', 'X2ndFlrSF', 'LowQualFinSF')])
+#相關性
+CorGrivArea <- cor(cbind(all[,c('SalePrice','GrLivArea','X1stFlrSF','X2ndFlrSF',
+                                'LowQualFinSF','TotalBsmtSF','TotRmsAbvGrd',
+                                'LotArea','LotFrontage')],
+                         all$X1stFlrSF+all$X2ndFlrSF), 
+                   use="pairwise.complete.obs") 
+CorGrivArea_Sort <- sort(CorGrivArea[,'SalePrice'], 
+                         decreasing = TRUE) %>%
+                      names()
+CorGrivArea[CorGrivArea_Sort, CorGrivArea_Sort] %>% 
+  corrplot.mixed(tl.col="black", tl.pos = "lt")
+#GrLivArea幾乎和X1stFlrSF、X2ndFlrS相加一樣
 
 #The most important categorical variable; Neighborhood
-var_GGvisualize(all,"geom_bar",aes = "x=Neighborhood,y=SalePrice",
-                other_par = "fill = 'steelblue',stat='summary', fun.y = 'median'") + 
-  scale_y_continuous(breaks= seq(0, 800000, by=50000),
-                     labels = comma) +
-  geom_label(stat = "count", 
-             aes(label = ..count.., y = ..count..), 
-             size=3) +
-  geom_hline(yintercept=163000, 
-             linetype="dashed", 
-             color = "red")
-
-grid.arrange(ggplot(all[!is.na(all$SalePrice),], aes(x=Neighborhood, y=SalePrice)) +
-               geom_bar(stat='summary', fun.y = "median", fill='blue') +
-               theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-               scale_y_continuous(breaks= seq(0, 800000, by=50000), labels = comma) +
-               geom_label(stat = "count", aes(label = ..count.., y = ..count..), size=3) +
-               geom_hline(yintercept=163000, linetype="dashed", color = "red"), #銷售價格中位數 
-             ggplot(data=all, aes(x=Neighborhood)) +
+grid.arrange(all %>% ggplot(aes(x=Neighborhood, y=SalePrice)) +
+               geom_bar(stat='summary',
+                        fun.y = "median", 
+                        fill='blue') +
+               scale_y_continuous(breaks= c(seq(0, 800000, by=50000),
+                                            all[!is.na(all$SalePrice),'SalePrice'] %>% 
+                                              median()), 
+                                  labels = comma) +
+               geom_label(stat = "count",
+                          aes(label = ..count.., y = ..count..),
+                          size=3) +
+               geom_hline(yintercept= all[!is.na(all$SalePrice),'SalePrice'] %>% 
+                                        median(), 
+                          linetype="dashed", 
+                          size = 2,
+                          color = "red") +#銷售價格中位數
+               GGvisualize_theme() +
+               theme(axis.text.x = element_text(angle = 45, hjust = 1)),  
+             all %>% ggplot(aes(x=Neighborhood)) +
                geom_histogram(stat='count')+
-               geom_label(stat = "count", aes(label = ..count.., y = ..count..), size=3)+
+               geom_label(stat = "count", 
+                          aes(label = ..count.., y = ..count..), 
+                          size=3)+
+               GGvisualize_theme() + 
                theme(axis.text.x = element_text(angle = 45, hjust = 1)))
 
 #Overall Quality, and other Quality variables

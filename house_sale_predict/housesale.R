@@ -6,10 +6,10 @@ library(corrplot)
 library(caret)
 library(gridExtra)
 library(scales)
-library(Rmisc)
+#library(Rmisc)
 library(ggrepel)
 library(randomForest)
-library(psych)
+#library(psych)
 library(xgboost)
 library(magrittr)
 library(stringr)
@@ -121,17 +121,17 @@ all$PoolQC<-as.integer(plyr::revalue(all$PoolQC,
 table(all$PoolQC)
 all[all$PoolQC != 0,c("SalePrice","PoolQC","PoolArea","OverallQual")]
 
-all %>% filter(!(is.na(SalePrice)) & PoolQC != 0) %>% 
-  ggplot(aes(x = OverallQual, 
-             y = SalePrice,
-             color = as.factor(PoolQC),
-             alpha = PoolArea)) +
-  geom_point(size = 10) +
+all %>% 
+  filter(!(is.na(SalePrice)) & PoolQC != 0) %>% 
+  ggplot(aes(x = PoolArea, 
+             y = SalePrice ,
+             size = PoolQC
+             )) +
+  geom_point(color = "steelblue") +
   theme_bw() + #去掉背景色
   theme(panel.grid=element_blank(),  #去掉網線
         panel.border=element_blank(),#去掉邊線
         axis.line=element_line(size=1,colour="black"))
-
 #有另一個變數和PoolQC有關,就是PoolArea variable (in square feet),檢查一下發現有三間房子沒有Pool
 #但是卻有PoolArea的數據
 table(all$PoolArea != 0 )
@@ -151,9 +151,8 @@ all[all$PoolArea > 0,] %>%
         axis.line=element_line(size=1,colour="black"))
   
 #根據圖形填為Fa
-all$PoolQC[2421] <- 2
-all$PoolQC[2504] <- 3
-all$PoolQC[2600] <- 2
+all$PoolQC[c(2421,2504,2600)] <- 2
+
 
 #Miscellaneous Feature----
 names(all)[names(all) %>% str_detect("Mis") %>% which]
@@ -163,7 +162,8 @@ na_col[names(na_col) %>% str_detect("Mis") %>% which]
 all$MiscFeature[is.na(all$MiscFeature)] <- 'None'
 all$MiscFeature <- as.factor(all$MiscFeature)
 
-all %>% filter(!(is.na(SalePrice))) %>% 
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
   ggplot(aes(x=MiscFeature, y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
   scale_y_continuous(breaks= seq(0, 800000, by=100000), labels = comma) +
@@ -178,13 +178,15 @@ all %>% filter(!(is.na(SalePrice))) %>%
                     ymin=180000, ymax=250000)
 
 #價值為0的MiscFeature
-all %>% filter(!(MiscFeature %in% "None") & MiscVal == 0) %>% 
+all %>% 
+  filter(!(MiscFeature %in% "None") & MiscVal == 0) %>% 
   select("Id","MiscVal","MiscFeature")
 #Alley----
 all$Alley[is.na(all$Alley)] <- 'None'
 all$Alley %<>% as.factor()
 
-all %>% filter(!(is.na(SalePrice))) %>% 
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
   ggplot(aes(x=Alley, y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2')+
   scale_y_continuous(breaks= seq(0, 200000, by=50000), labels = comma) + 
@@ -279,7 +281,6 @@ all %<>% group_by(Neighborhood) %>%
 all %>% filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=LotShape, y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3') +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
   theme_bw()+
@@ -344,10 +345,11 @@ all$GarageType[is.na(all$GarageType)] <- 'No Garage'
 all$GarageType <- as.factor(all$GarageType)
 table(all$GarageType)
 #GarageFinish: Interior finish of the garage
-all %>% filter(!(is.na(SalePrice))) %>% 
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=GarageFinish, y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3') +
+  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
   theme_bw()+
@@ -361,24 +363,37 @@ table(all$GarageFinish)
 all$GarageQual[is.na(all$GarageQual)] <- 'None'
 all$GarageQual<-as.integer(plyr::revalue(all$GarageQual, c('None' = 0, 'Po' = 1, 'Fa' = 2,
                                                      'TA' = 3,'Gd' = 4, 'Ex' = 5)))
-all %>% filter(!(is.na(SalePrice))) %>% 
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=GarageQual, y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3') +
+  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
   theme_bw()+
   theme(axis.text.x = element_text(hjust = 1),
         panel.grid.major=element_line(colour=NA))
-
+all$GarageQual <- ifelse(all$GarageQual %in% c(0:1),0,
+                         ifelse(all$GarageQual %in% c(4:5),3,all$GarageQual - 1))
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
+  ggplot( aes(x=GarageQual, y=SalePrice)) +
+  geom_bar(stat = 'summary', fun.y = "median", fill = 'dodgerblue2') +
+  geom_bar(stat = 'summary', fun.y = "sd", fill = 'deeppink3',width = 0.5) +
+  scale_y_continuous(labels = comma) + 
+  geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
+  theme_bw()+
+  theme(axis.text.x = element_text(hjust = 1),
+        panel.grid.major=element_line(colour=NA))
 #GarageCond: Garage condition
 all$GarageCond[is.na(all$GarageCond)] <- 'None'
 all$GarageCond<-as.integer(plyr::revalue(all$GarageCond, c('None' = 0, 'Po' = 1, 'Fa' = 2,
                                                      'TA' = 3,'Gd' = 4, 'Ex' = 5)))
-all %>% filter(!(is.na(SalePrice))) %>% 
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=GarageCond, y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3') +
+  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
   theme_bw()+
@@ -408,10 +423,11 @@ all$BsmtQual[c(2218, 2219)] <- names(sort(-table(all$BsmtQual)))[1]
 all$BsmtQual[is.na(all$BsmtQual)] <- 'None'
 all$BsmtQual<-as.integer(plyr::revalue(all$BsmtQual, c('None' = 0, 'Fa' = 1,
                                                  'TA' = 2,'Gd' = 3, 'Ex' = 4)))
-all %>% filter(!(is.na(SalePrice))) %>% 
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=BsmtQual, y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3') +
+  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
   theme_bw()+
@@ -423,10 +439,11 @@ all %>% filter(!(is.na(SalePrice))) %>%
 all$BsmtCond[is.na(all$BsmtCond)] <- 'None'
 all$BsmtCond<-as.integer(plyr::revalue(all$BsmtCond, c('None' = 0, 'Po' = 1, 'Fa' = 2,
                                                  'TA' = 3,'Gd' = 4)))
-all %>% filter(!(is.na(SalePrice))) %>% 
+all %>%
+  filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=BsmtCond, y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3') +
+  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
   theme_bw()+
@@ -441,7 +458,7 @@ all$BsmtExposure<-as.integer(plyr::revalue(all$BsmtExposure,
 all %>% filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=BsmtExposure, y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3') +
+  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
   theme_bw()+
@@ -450,36 +467,65 @@ all %>% filter(!(is.na(SalePrice))) %>%
 
 #BsmtFinType1: Rating of basement finished area
 all$BsmtFinType1[is.na(all$BsmtFinType1)] <- 'None'
-all$BsmtFinType1<-as.integer(plyr::revalue(all$BsmtFinType1, 
-                                           c('None'=0, 'Unf'=1, 'LwQ'=2,
-                                             'Rec'=3, 'BLQ'=4, 'ALQ'=5,'GLQ'=6)))
-all %>% filter(!(is.na(SalePrice))) %>% 
-  ggplot( aes(x=BsmtFinType1, y=SalePrice)) +
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
+  ggplot( aes(x=factor(BsmtFinType1,levels =c('None', 'Unf', 'LwQ',
+                                              'Rec', 'BLQ', 'ALQ','GLQ')),
+              y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3') +
+  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  scale_y_continuous(labels = comma) + 
+  xlab('BsmtFinType1') +
+  geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
+  theme_bw()+
+  theme(axis.text.x = element_text(hjust = 1),
+        panel.grid.major=element_line(colour=NA))
+all$BsmtFinType1 <- ifelse(all$BsmtFinType1 %in% c('LwQ','Rec', 'BLQ', 'ALQ'),
+                           'ABRL',all$BsmtFinType1)
+all$BsmtFinType1 %<>% factor(levels = c('None','Unf','ABRL','GLQ'))
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
+  ggplot( aes(x=BsmtFinType1,
+              y=SalePrice)) +
+  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
+  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
   theme_bw()+
   theme(axis.text.x = element_text(hjust = 1),
         panel.grid.major=element_line(colour=NA))
+
 
 #BsmtFinType2: Rating of basement finished area (if multiple types)
 all$BsmtFinType2[is.na(all$BsmtFinType2)] <- 'None'
-all$BsmtFinType2<-as.integer(plyr::revalue(all$BsmtFinType2,
-                                           c('None'=0, 'Unf'=1, 'LwQ'=2,
-                                             'Rec'=3, 'BLQ'=4, 'ALQ'=5,
-                                             'GLQ'=6)))
-all %>% filter(!(is.na(SalePrice))) %>% 
-  ggplot( aes(x=BsmtFinType2, y=SalePrice)) +
+
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
+  ggplot( aes(x=factor(BsmtFinType2,levels =c('None', 'Unf', 'LwQ',
+                                              'Rec', 'BLQ', 'ALQ','GLQ')),
+              y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3') +
+  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  scale_y_continuous(labels = comma) + 
+  xlab('BsmtFinType1') +
+  geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
+  theme_bw()+
+  theme(axis.text.x = element_text(hjust = 1),
+        panel.grid.major=element_line(colour=NA))
+all$BsmtFinType2 <- ifelse(all$BsmtFinType2 %in% c('LwQ','Rec', 'BLQ', 'ALQ'),
+                           'ABRL',all$BsmtFinType2)
+all$BsmtFinType2 %<>% factor(levels = c('None','Unf','ABRL','GLQ'))
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
+  ggplot( aes(x=BsmtFinType2,
+              y=SalePrice)) +
+  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
+  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
   theme_bw()+
   theme(axis.text.x = element_text(hjust = 1),
         panel.grid.major=element_line(colour=NA))
-
-
 #剩餘六個1-2NA的變數
 all[(is.na(all$BsmtFullBath) | is.na(all$BsmtHalfBath) |
      is.na(all$BsmtFinSF1) | is.na(all$BsmtFinSF2)|
@@ -542,10 +588,11 @@ grid.arrange(
 all$MasVnrType<-as.integer(plyr::revalue(all$MasVnrType, 
                                          c('None'=0, 'BrkCmn'=0,
                                            'BrkFace'=1, 'Stone'=2)))
-all %>% filter(!(is.na(SalePrice))) %>% 
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=MasVnrType, y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3') +
+  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
   theme_bw()+
@@ -555,10 +602,21 @@ all %>% filter(!(is.na(SalePrice))) %>%
 #MasVnrArea: Masonry veneer area in square feet
 all$MasVnrArea[is.na(all$MasVnrArea)] <-0
 
-
+#observe Neighborhood & MSZoning 
+all %>% 
+  group_by(MSZoning,Neighborhood) %>% 
+  summarise(value = n()) %>% 
+  xtabs(data = .,value~.)
+  
 
 #MSZoning----
 #MSZoning: Identifies the general zoning classification of the sale
+all %>% 
+  group_by(MSZoning,Neighborhood) %>% 
+  summarise(value = n()) %>% 
+  xtabs(data = .,value~.)
+
+
 all[all$MSZoning %>% is.na(),c('MSZoning', 'Neighborhood',"OverallQual")] 
 #4個NA有三個是IDOTRR區一個是Mitchel區
 #IDOTRR
@@ -577,10 +635,11 @@ table(all$KitchenQual)
 all$KitchenQual[is.na(all$KitchenQual)] <- 'TA' #將最多的填補回去
 all$KitchenQual<-as.integer(plyr::revalue(all$KitchenQual, c('None' = 0, 'Po' = 1, 'Fa' = 2,
                                                        'TA' = 3,'Gd' = 4, 'Ex' = 5)))
-all %>% filter(!(is.na(SalePrice))) %>% 
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=KitchenQual, y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3') +
+  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
   theme_bw()+
@@ -596,20 +655,26 @@ all$Utilities <- NULL
 #Functional: Home functionality----
 #1NA
 all$Functional[is.na(all$Functional)] <- names(sort(-table(all$Functional)))[1]
-all$Functional <- as.integer(plyr::revalue(all$Functional, c('Sal'=0, 'Sev'=1,
-                                                       'Maj2'=2, 'Maj1'=3,
-                                                       'Mod'=4, 'Min2'=5,
-                                                       'Min1'=6, 'Typ'=7)))
 table(all$Functional)
 all %>% filter(!(is.na(SalePrice))) %>% 
-  ggplot( aes(x=Functional, y=SalePrice)) +
+  ggplot( aes(x=factor(Functional,
+                       levels =  c('Sal','Sev',
+                                   'Maj2','Maj1',
+                                   'Mod','Min2',
+                                   'Min1','Typ')), 
+              y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3') +
+  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
+  xlab('Functional') + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
   theme_bw()+
   theme(axis.text.x = element_text(hjust = 1),
         panel.grid.major=element_line(colour=NA))
+
+all$Functional <- ifelse(all$Functional %in% c('Min2','Min1'),
+                         'Min',all$Functional)
+all$Functional %<>% as.factor()
 
 #Exter ----
 na_col[names(na_col) %>% str_detect("Exterior") %>% which]
@@ -626,10 +691,11 @@ table(all$Exterior2nd)
 #ExterQual: Evaluates the quality of the material on the exterior
 all$ExterQual<-as.integer(plyr::revalue(all$ExterQual, c('None' = 0, 'Po' = 1, 'Fa' = 2,
                                                    'TA' = 3,'Gd' = 4, 'Ex' = 5)))
-all %>% filter(!(is.na(SalePrice))) %>% 
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=ExterQual, y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3') +
+  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
   theme_bw()+
@@ -646,7 +712,7 @@ all$ExterCond <- as.integer(plyr::revalue(all$ExterCond,
 all %>% filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=ExterCond, y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3') +
+  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
   theme_bw()+
@@ -687,10 +753,11 @@ all$HeatingQC <- as.integer(plyr::revalue(all$HeatingQC,
                                         c('None' = 0, 'Po' = 1, 'Fa' = 2,
                                           'TA' = 3,'Gd' = 4, 'Ex' = 5)))
 
-all %>% filter(!(is.na(SalePrice))) %>% 
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=HeatingQC, y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3') +
+  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
   theme_bw()+
@@ -726,10 +793,11 @@ table(all$LandSlope)
 all$LandSlope <- as.integer(plyr::revalue(all$LandSlope, 
                                           c('Sev' = 0, 'Mod' = 1, 'Gtl' = 2)))
 
-all %>% filter(!(is.na(SalePrice))) %>% 
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=LandSlope, y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3') +
+  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
   theme_bw()+
@@ -741,10 +809,11 @@ all$LandSlope %<>% as.factor()
 #Dwelling----
 #BldgType: Type of dwelling
 
-all %>% filter(!(is.na(SalePrice))) %>% 
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=as.factor(BldgType), y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3') +
+  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
   theme_bw()+
@@ -757,10 +826,11 @@ all$BldgType <- as.factor(all$BldgType)
 #HouseStyle: Style of dwelling
 table(all$HouseStyle)
 
-all %>% filter(!(is.na(SalePrice))) %>% 
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=HouseStyle, y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3') +
+  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
   theme_bw()+
@@ -789,17 +859,18 @@ table(all$Condition2)
 
 #Pavement of Street & Driveway----
 #Street: Type of road access to property
-all$Street<-as.integer(plyr::revalue(all$Street, c('Grvl'=0, 'Pave'=1)))
+all$Street <-as.integer(plyr::revalue(all$Street, c('Grvl'=0, 'Pave'=1)))
 table(all$Street)
 #PavedDrive: Paved driveway
 
 table(all$PavedDrive)
 all$PavedDrive<-as.integer(plyr::revalue(all$PavedDrive,
                                          c('N'=0, 'P'=1, 'Y'=2)))
-all %>% filter(!(is.na(SalePrice))) %>% 
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=PavedDrive, y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3') +
+  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
   theme_bw()+
@@ -812,20 +883,18 @@ all$MoSold <- as.factor(all$MoSold)
 grid.arrange(
   ggplot(all[!is.na(all$SalePrice),], aes(x=as.factor(YrSold), y=SalePrice)) +
     geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2')+
-    geom_bar(stat='summary', fun.y = "sd", fill='deeppink3') +
     scale_y_continuous(breaks= seq(0, 800000, by=25000), labels = comma) +
     geom_label(stat = "count", aes(label = ..count.., y = ..count..)) +
     coord_cartesian(ylim = c(0, 200000)) +
     geom_hline(yintercept=163000, linetype="dashed", color = "red"), #dashed line is median SalePrice
   ggplot(all[!is.na(all$SalePrice),], aes(x=MoSold, y=SalePrice)) +
     geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2')+
-    geom_bar(stat='summary', fun.y = "sd", fill='deeppink3') +
     scale_y_continuous(breaks= seq(0, 800000, by=25000), labels = comma) +
     geom_label(stat = "count", aes(label = ..count.., y = ..count..)) +
     coord_cartesian(ylim = c(0, 200000)) +
     geom_hline(yintercept=163000, linetype="dashed", color = "red"), #dashed line is median SalePrice
   widths=c(1,2)
-  )
+)
 #MSSubClass
 #MSSubClass: Identifies the type of dwelling involved in the sale.
 table(all$MSSubClass)
@@ -890,27 +959,32 @@ imp_DF <- data.frame(Variables = row.names(imp_RF),
                      MSE = imp_RF[,1]) %>% 
           arrange(desc(MSE))
 
-important <- ggplot(imp_DF[1:30,], 
+
+important <-  ggplot(imp_DF[1:30,], 
                     aes(x=reorder(Variables, MSE),
                         y=MSE, 
                         fill=MSE)) + 
              geom_bar(stat = 'identity') + 
-             scale_y_continuous(labels = function(x)paste0(x,'%')) +
+             scale_y_continuous(labels = function(x)paste0(x,'%'),
+                                expand = c(0,0),
+                                limits = c(0,20)) +
              labs(x = '變數', 
-                  y= '如果拿掉該變數MSE會提升的%數') + 
+                  y= '替換掉MSE會提升的%數') + 
              coord_flip() + 
+             theme_bw()+
              theme(legend.position="none",
-                   axis.text.x = element_text(size = 16,
+                   axis.text.x = element_text(size = 25,
                                               face = 'bold'),
-                   axis.text.y = element_text(size = 16,
+                   axis.text.y = element_text(size = 30,
                                               face = 'bold'),
-                   axis.title.x = element_text(size = 30,
+                   axis.title.x = element_text(size = 40,
                                                face = 'bold'),
-                   axis.title.y = element_text(size = 30,
+                   axis.title.y = element_text(size = 40,
                                                face = 'bold')) 
 important
 ##輸出重要性
-CairoPNG('output/importance.png',width = 1600, height = 800)
+
+CairoPNG('output/importance.png',width = 1200, height = 800)
 print(important)
 dev.off()
 
@@ -935,6 +1009,11 @@ grid.arrange(all %>% ggplot() +
                geom_density(aes(x = TotalBsmtSF),
                             fill = 'pink',color = 'deeppink') + 
                GGvisualize_theme(),
+             all %>% ggplot() +
+               geom_density(aes(x = TotRmsAbvGrd),
+                            fill = 'pink',color = 'deeppink') + 
+               scale_x_continuous(breaks = seq(0,max(all$TotRmsAbvGrd))) + 
+               GGvisualize_theme(),
              all %>% filter(LotArea< 50000) %>% ggplot()+
                geom_density(aes(x = LotArea) ,
                             fill = 'pink',color = 'deeppink') + 
@@ -943,39 +1022,25 @@ grid.arrange(all %>% ggplot() +
                geom_density(aes(x = LotFrontage),
                             fill = 'pink',color = 'deeppink') + 
                GGvisualize_theme(),
-            
-             all %>% ggplot() +
-               geom_density(aes(x = TotRmsAbvGrd),
-                            fill = 'pink',color = 'deeppink') + 
-               scale_x_continuous(breaks = seq(0,max(all$TotRmsAbvGrd))) + 
-               GGvisualize_theme(),
-             layout_matrix = matrix(c(1,2,3,4,5,8,6,7),4,2,byrow=TRUE))
+             layout_matrix = matrix(1:8,4,2,byrow=TRUE))
 
 grid.arrange(all %>% ggplot() +
                geom_point(aes(x = GrLivArea ,y=SalePrice),
                             fill = 'pink',color = 'deeppink') + 
-               scale_x_continuous(breaks = seq(0,6000,1000),limits = c(0,7000)) + 
-               scale_y_continuous(limits = c(0,700000)) + 
                GGvisualize_theme(),
              all %>% ggplot() +
                geom_point(aes(x = X1stFlrSF ,y=SalePrice),
                             fill = 'pink',color = 'deeppink') + 
-               scale_x_continuous(breaks = seq(0,6000,1000),limits = c(0,7000)) + 
-               scale_y_continuous(limits = c(0,700000)) + 
                GGvisualize_theme(),
              all %>% filter(X2ndFlrSF != 0 ) %>% 
                ggplot() +
                geom_point(aes(x = X2ndFlrSF ,y=SalePrice),
                             fill = 'pink',color = 'deeppink') + 
-               scale_x_continuous(breaks = seq(0,6000,1000),limits = c(0,7000)) + 
-               scale_y_continuous(limits = c(0,700000)) + 
                GGvisualize_theme(),
              all %>% filter(LowQualFinSF != 0 ) %>% 
                ggplot()+
                geom_point(aes(x = LowQualFinSF ,y=SalePrice),
                           fill = 'pink',color = 'deeppink') + 
-               scale_x_continuous(breaks = seq(0,6000,1000),limits = c(0,7000)) + 
-               scale_y_continuous(limits = c(0,700000)) + 
                GGvisualize_theme(),
              all %>% ggplot() +
                geom_point(aes(x = TotalBsmtSF ,y=SalePrice),
@@ -994,8 +1059,7 @@ grid.arrange(all %>% ggplot() +
                             fill = 'pink',color = 'deeppink') + 
                GGvisualize_theme(),
              
-             layout_matrix = matrix(c(1,2,4,3,5,6,7,8),4,2,byrow=TRUE))
-
+             layout_matrix = matrix(1:8,4,2,byrow=TRUE))
 
 
 
@@ -1013,7 +1077,7 @@ CorGrivArea[CorGrivArea_Sort, CorGrivArea_Sort] %>%
   corrplot.mixed(tl.col="black", tl.pos = "lt")
 #GrLivArea幾乎和X1stFlrSF、X2ndFlrS相加一樣
 
-#The most important categorical variable; Neighborhood
+#Neighborhood
 grid.arrange(all %>% ggplot(aes(x=Neighborhood, y=SalePrice)) +
                geom_bar(stat='summary',
                         fun.y = "median", 
@@ -1077,7 +1141,7 @@ grid.arrange(ggplot(all[!is.na(all$SalePrice),], aes(x=MSSubClass, y=SalePrice))
 
 #Garage variables
 #correct error
-all$GarageYrBlt[2593] <- 2007 #this must have been a typo. GarageYrBlt=2207, YearBuilt=2006, YearRemodAdd=2007
+all$GarageYrBlt[2593] <- 2007 #keying error GarageYrBlt=2207, YearBuilt=2006, YearRemodAdd=2007
 grid.arrange(ggplot(data=all[all$GarageCars !=0,], aes(x=GarageYrBlt)) +
                geom_histogram(),
              ggplot(data=all, aes(x=as.factor(GarageCars))) +

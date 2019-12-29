@@ -23,7 +23,7 @@ knitr::opts_knit$set(root.dir ="D:/r_project/data-analysis/house_sale_predict")
 >  With 79 explanatory variables describing (almost) every aspect of residential homes in Ames, Iowa, this competition challenges you to predict the final price of each home.
 
 
-這次的資料是來自於[Kaggle](https://www.kaggle.com/c/house-prices-advanced-regression-techniques)，題目是要預測美國愛荷華州的埃姆斯城市的房價。我會進行資料探索、特徵工程和一些資料視覺，最後我會運用LASSO迴歸、XGBoost和SVM來建模，目前我是第885名(TOP19%)。
+這次的資料是來自於[Kaggle](https://www.kaggle.com/c/house-prices-advanced-regression-techniques)，題目是要預測美國愛荷華州的埃姆斯城市的房價。我會進行資料探索、特徵工程和一些資料視覺，最後我會運用LASSO迴歸、XGBoost和SVM來建模，目前我是第885名(TOP19%)，但是隨著時間流逝大概會一直持續下降吧......
 
 # 前置作業
 
@@ -41,6 +41,8 @@ library(psych)
 library(xgboost)
 library(magrittr)
 library(stringr)
+library(knitr) #for html table
+library(kableExtra) #for kable adjust
 ```
 
 
@@ -73,12 +75,13 @@ char_var <- sapply(all, is.character) %>% which %>% names()
 cat("數值變數有",length(num_var),"個",",類別變數有",length(char_var),"個")
 ```
 
-# 探索資料
+# 初步探索資料
 ## 目標變數--銷售價格
 
 看下圖可以發現我們的目標變數"銷售價格"，是一個明顯的右偏峰態。想一想其實也很合理，市場上絕大多數的消費者都負擔不起昂貴的房子。如果圖形呈現左偏或者常態峰佈，代表該地區房價偏貴，或許是屬於高級住宅區也不一定。後面我會將銷售價格做log處理將數據轉換成比較符合常態分佈。
 ```{r saleprice plot}
-all %>% filter(!(is.na(SalePrice))) %>% 
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
   ggplot(aes(x = SalePrice)) + 
   geom_histogram(fill="deeppink2",
                  binwidth = 10000) +
@@ -112,8 +115,9 @@ summary(all$SalePrice)
 ```{r corplot, fig.height = 10, fig.width = 14}
 cor_numvar <- cor(all[, num_var], use="pairwise.complete.obs")
 #排序之後挑出去相關性絕對值大於0.4的
-cor_sortname <- sort(cor_numvar[,'SalePrice'], 
-                     decreasing = TRUE) %>% 
+cor_sortname <- 
+  sort(cor_numvar[,'SalePrice'], 
+       decreasing = TRUE) %>% 
   as.matrix() %>% 
   apply(1, function(x) abs(x)>0.4) %>% 
   which() %>% 
@@ -151,7 +155,8 @@ OverallQual和銷售價格明顯的呈現正相關，而且OverallQual越高銷�
 
 ## GrLivArea
 ```{r GrLivArea, fig.height = 10, fig.width = 14}
-all %>% filter(!(is.na(SalePrice))) %>% 
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
   ggplot(aes(x=GrLivArea, y=SalePrice))+
   geom_point(col='dodgerblue2') + 
   geom_smooth(method = "lm", se=FALSE, color="deeppink3") +
@@ -181,10 +186,12 @@ all[c(524, 1299), c('SalePrice', 'GrLivArea', 'OverallQual')]
 來看看哪些變數包含NA值。
 
 ```{r NA, fig.height = 10, fig.width = 14}
-na_col <- all[is.na(all) %>% colSums %>% ">"(0) %>% which] %>% 
-   sapply(is.na) %>% 
+na_col <- 
+  all[is.na(all) %>% colSums %>% ">"(0) %>% which] %>% 
+  sapply(is.na) %>% 
   colSums() %>% 
   sort(decreasing = TRUE) 
+na_col
 ```
 
 我將會在後面特徵工程時連同重新編碼、轉換變數時一併處理NA值。
@@ -220,11 +227,13 @@ all$PoolQC<-as.integer(plyr::revalue(all$PoolQC,
 table(all$PoolQC)
 all[all$PoolQC != 0,c("SalePrice","PoolQC","PoolArea","OverallQual")]
 
-all %>% filter(!(is.na(SalePrice)) & PoolQC != 0) %>% 
-  ggplot(aes(x = OverallQual, y = SalePrice ,
-             color = as.factor(PoolQC),
-             alpha = PoolArea)) +
-  geom_point(size = 10) +
+all %>% 
+  filter(!(is.na(SalePrice)) & PoolQC != 0) %>% 
+  ggplot(aes(x = PoolArea, 
+             y = SalePrice ,
+             size = PoolQC
+             )) +
+  geom_point(color = "steelblue") +
   theme_bw() + #去掉背景色
   theme(panel.grid=element_blank(),  #去掉網線
         panel.border=element_blank(),#去掉邊線
@@ -232,7 +241,7 @@ all %>% filter(!(is.na(SalePrice)) & PoolQC != 0) %>%
 
 ```
 
-有游泳池的房子只有10間，圖形上顯示Pool相關變數似乎不那麼顯著影響房價，右上角的資料應該有其他變數影響。後面特徵工程的時候我或許會把這類別變數轉成是否有游泳池就好，評級可能不太需要。在這邊我先把NA值轉成NO，並且把它轉成類別變數。
+有游泳池的房子只有10間，圖形上顯示Pool相關變數似乎不那麼顯著影響房價。後面特徵工程的時候我或許會把這類別變數轉成是否有游泳池就好，評級可能不太需要。在這邊我先把NA值轉成NO，並且把它轉成類別變數。
 
 ##### PoolArea
 另一個跟Pool有關的是PoolArea:
@@ -267,9 +276,8 @@ all[all$PoolArea > 0,] %>%
 透過上圖我會把這三個值都填2回去比較合理。
 
 ```{r PoolArea4}
-all$PoolQC[2421] <- 2
-all$PoolQC[2504] <- 3
-all$PoolQC[2600] <- 2
+all$PoolQC[c(2421,2504,2600)] <- 2
+
 all[all$PoolArea > 0,] %>% 
   ggplot(aes(x = OverallQual,y = PoolArea)) + 
   geom_point(aes(alpha = PoolQC),
@@ -306,7 +314,8 @@ MiscFeature: Miscellaneous feature not covered in other categories
 ```{r MiscFeature}
 all$MiscFeature[is.na(all$MiscFeature)] <- "None"
 all$MiscFeature <- as.factor(all$MiscFeature)
-all %>% filter(!(is.na(SalePrice))) %>% 
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
   ggplot(aes(x=MiscFeature, y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
   scale_y_continuous(breaks= seq(0, 800000, by=100000), labels = comma) +
@@ -348,7 +357,8 @@ Alley: Type of alley access to property
 ```{r Alley}
 all$Alley[is.na(all$Alley)] <- 'None'
 all$Alley %<>% as.factor()
-all %>% filter(!(is.na(SalePrice))) %>% 
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
   ggplot(aes(x=Alley, y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2')+
   scale_y_continuous(breaks= seq(0, 200000, by=50000), labels = comma) + 
@@ -375,7 +385,8 @@ Fence: Fence quality
 
 ```{r Fence}
 all$Fence[is.na(all$Fence)] <- 'None'
-all %>% filter(!(is.na(SalePrice))) %>%
+all %>% 
+  filter(!(is.na(SalePrice))) %>%
   ggplot(aes(x=Fence, y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2')+
   scale_y_continuous(labels = comma) + 
@@ -417,7 +428,8 @@ all$FireplaceQu<-as.integer(plyr::revalue(all$FireplaceQu,
                                           c('None' = 0, 'Po' = 1, 
                                             'Fa' = 2, 'TA' = 3,
                                             'Gd' = 4, 'Ex' = 5)))
-all %>% filter(!(is.na(SalePrice))) %>%
+all %>% 
+  filter(!(is.na(SalePrice))) %>%
   ggplot(aes(x = FireplaceQu, y = SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2')+
   scale_y_continuous(labels = comma) + 
@@ -435,7 +447,8 @@ all %>% filter(!(is.na(SalePrice))) %>%
 ##### Fireplaces
 ```{r Fireplaces}
 table(all$Fireplaces)
-all %>% filter(!(is.na(SalePrice))) %>%
+all %>% 
+  filter(!(is.na(SalePrice))) %>%
   ggplot(aes(x = Fireplaces, y = SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2')+
   scale_y_continuous(labels = comma) + 
@@ -459,7 +472,8 @@ LotFrontage: Linear feet of street connected to property
 初步建模我先根據房屋所在地區的中位數來填補。為什麼呢？拿台灣來說吧，嘉義縣的房子大部分來說要到街上肯定比台北市的房子去到街上還要遠，這就是郊區跟市區的差別。但是這樣還是會有偏誤，以台北市來說北投區內湖區有可能會比中正區信義區還要來的遠，也就是說城市內部也會存在著很大的差異。下一次我有可能會針對這個變數單獨建一個模型來估計它的遺漏值。
 
 ```{r LotFrontage_plot,fig.height = 10, fig.width = 14}
-all %>% ggplot( aes(x=as.factor(Neighborhood), y=LotFrontage)) +
+all %>% 
+  ggplot( aes(x=as.factor(Neighborhood), y=LotFrontage)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
   geom_bar(stat='summary', fun.y = "sd", color='deeppink3') +
   theme_bw()+
@@ -471,11 +485,12 @@ all %>% ggplot( aes(x=as.factor(Neighborhood), y=LotFrontage)) +
 
 ```{r LotFrontage}
 #利用dplyr結合ifelse進行向量式填補
-all %<>% group_by(Neighborhood) %>% 
-         mutate(LotFrontage = ifelse(is.na(LotFrontage),
-                                     median(LotFrontage,na.rm = T),
-                                     LotFrontage)) %>% 
-         as.data.frame()
+all %<>% 
+  group_by(Neighborhood) %>% 
+  mutate(LotFrontage = ifelse(is.na(LotFrontage),
+                              median(LotFrontage,na.rm = T),
+                              LotFrontage)) %>% 
+  as.data.frame()
 ```
 
 
@@ -492,10 +507,10 @@ all %<>% group_by(Neighborhood) %>%
 ```{r LotShape}
 table(all$LotShape)
 #將其轉換為數字
-all %>% filter(!(is.na(SalePrice))) %>% 
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=LotShape, y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3') +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
   theme_bw()+
@@ -597,10 +612,11 @@ table(all$GarageType)
 * NA   No Garage
 
 ```{r GarageFinish}
-all %>% filter(!(is.na(SalePrice))) %>% 
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=GarageFinish, y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3') +
+  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
   theme_bw()+
@@ -613,7 +629,7 @@ all$GarageFinish <- as.integer(plyr::revalue(all$GarageFinish,
 table(all$GarageFinish)
 ```
 
-
+暗紅色代表標準差，明顯的次序關係我就將其轉成數字。
 
 ##### GarageQual
 
@@ -628,7 +644,8 @@ table(all$GarageFinish)
 all$GarageQual[is.na(all$GarageQual)] <- 'None'
 all$GarageQual<-as.integer(plyr::revalue(all$GarageQual, c('None' = 0, 'Po' = 1, 'Fa' = 2,
                                                      'TA' = 3,'Gd' = 4, 'Ex' = 5)))
-all %>% filter(!(is.na(SalePrice))) %>% 
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=GarageQual, y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
   geom_bar(stat='summary', fun.y = "sd", fill='deeppink3') +
@@ -639,7 +656,22 @@ all %>% filter(!(is.na(SalePrice))) %>%
         panel.grid.major=element_line(colour=NA))
 ```
 
+從圖形上可以看出Poor Garge 幾乎跟沒有Garge一樣，感覺沒有Garge可能還比較好。另外Ex Garage數量稀少所以標準差還比中位數大，可見三個物件彼此相異很大。這邊我會把0和1以及4和5合併增加這個變數的可解釋性。
 
+```{r GarageQual2}
+all$GarageQual <- ifelse(all$GarageQual %in% c(0:1),0,
+                         ifelse(all$GarageQual %in% c(4:5),3,all$GarageQual - 1))
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
+  ggplot( aes(x=GarageQual, y=SalePrice)) +
+  geom_bar(stat = 'summary', fun.y = "median", fill = 'dodgerblue2') +
+  geom_bar(stat = 'summary', fun.y = "sd", fill = 'deeppink3',width = 0.5) +
+  scale_y_continuous(labels = comma) + 
+  geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
+  theme_bw()+
+  theme(axis.text.x = element_text(hjust = 1),
+        panel.grid.major=element_line(colour=NA))
+```
 
 
 ##### GarageCond
@@ -656,10 +688,11 @@ all$GarageCond[is.na(all$GarageCond)] <- 'None'
 all$GarageCond<-as.integer(plyr::revalue(all$GarageCond, 
                                          c('None' = 0, 'Po' = 1, 'Fa' = 2,
                                            'TA' = 3,'Gd' = 4, 'Ex' = 5)))
-all %>% filter(!(is.na(SalePrice))) %>% 
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=GarageCond, y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3') +
+  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
   theme_bw()+
@@ -720,10 +753,11 @@ table(all$BsmtQual)
 all$BsmtQual<-as.integer(plyr::revalue(all$BsmtQual, 
                                        c('None' = 0, 'Fa' = 1,
                                          'TA' = 2,'Gd' = 3, 'Ex' = 4)))
-all %>% filter(!(is.na(SalePrice))) %>% 
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=BsmtQual, y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3') +
+  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
   theme_bw()+
@@ -746,10 +780,11 @@ all$BsmtCond[is.na(all$BsmtCond)] <- 'None'
 table(all$BsmtCond)
 all$BsmtCond<-as.integer(plyr::revalue(all$BsmtCond, c('None' = 0, 'Po' = 1, 'Fa' = 2,
                                                  'TA' = 3,'Gd' = 4)))
-all %>% filter(!(is.na(SalePrice))) %>% 
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=BsmtCond, y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3') +
+  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
   theme_bw()+
@@ -772,10 +807,11 @@ all$BsmtExposure[is.na(all$BsmtExposure)] <- 'None'
 all$BsmtExposure<-as.integer(plyr::revalue(all$BsmtExposure, 
                                            c('None'=0, 'No'=1, 'Mn'=2,
                                              'Av'=3, 'Gd'=4)))
-all %>% filter(!(is.na(SalePrice))) %>% 
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=BsmtExposure, y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3') +
+  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
   theme_bw()+
@@ -796,23 +832,39 @@ all %>% filter(!(is.na(SalePrice))) %>%
 
 ```{r BsmtFinType1}
 all$BsmtFinType1[is.na(all$BsmtFinType1)] <- 'None'
-all$BsmtFinType1<-as.integer(plyr::revalue(all$BsmtFinType1, 
-                                           c('None'=0, 'Unf'=1, 'LwQ'=2,
-                                             'Rec'=3, 'BLQ'=4, 'ALQ'=5,'GLQ'=6)))
-all %>% filter(!(is.na(SalePrice))) %>% 
-  ggplot( aes(x=BsmtFinType1, y=SalePrice)) +
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
+  ggplot( aes(x=factor(BsmtFinType1,levels =c('None', 'Unf', 'LwQ',
+                                              'Rec', 'BLQ', 'ALQ','GLQ')),
+              y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3') +
+  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  scale_y_continuous(labels = comma) + 
+  xlab('BsmtFinType1') +
+  geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
+  theme_bw()+
+  theme(axis.text.x = element_text(hjust = 1),
+        panel.grid.major=element_line(colour=NA))
+```
+
+看起來 'LwQ','Rec', 'BLQ', 'ALQ'似乎在售價上面沒甚麼差別，反而Unf還能賣高一點，但是其標準差有點高代表不見得Unf每個物件都能賣高一點。在這邊我會把'LwQ','Rec', 'BLQ', 'ALQ'合併成一個'ABRL'並將這個變數轉為factor。
+
+```{r BsmtFinType1_2}
+all$BsmtFinType1 <- ifelse(all$BsmtFinType1 %in% c('LwQ','Rec', 'BLQ', 'ALQ'),
+                           'ABRL',all$BsmtFinType1)
+all$BsmtFinType1 %<>% factor(levels = c('None','Unf','ABRL','GLQ'))
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
+  ggplot( aes(x=BsmtFinType1,
+              y=SalePrice)) +
+  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
+  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
   theme_bw()+
   theme(axis.text.x = element_text(hjust = 1),
         panel.grid.major=element_line(colour=NA))
-
 ```
-
-
-
 ##### BsmtFinType2
 
 * GLQ  Good Living Quarters
@@ -825,10 +877,7 @@ all %>% filter(!(is.na(SalePrice))) %>%
 
 ```{r BsmtFinType2}
 all$BsmtFinType2[is.na(all$BsmtFinType2)] <- 'None'
-all$BsmtFinType2<-as.integer(plyr::revalue(all$BsmtFinType2,
-                                           c('None'=0, 'Unf'=1, 'LwQ'=2,
-                                             'Rec'=3, 'BLQ'=4, 'ALQ'=5,
-                                             'GLQ'=6)))
+
 all %>% filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=BsmtFinType2, y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
@@ -840,7 +889,24 @@ all %>% filter(!(is.na(SalePrice))) %>%
         panel.grid.major=element_line(colour=NA))
 ```
 
+情況跟BsmtFinType1類似，但是ALQ似乎有比較跟'LwQ','Rec'和'BLQ'有明顯的差距，可是其標準差高數量又偏少，感覺組內不夠一致。這邊還是會跟BsmtFinType1處理方法依樣，把'LwQ','Rec', 'BLQ', 'ALQ'合併成一個'ABRL'並將這個變數轉為factor。
 
+```{r BsmtFinType2_2}
+all$BsmtFinType2 <- ifelse(all$BsmtFinType2 %in% c('LwQ','Rec', 'BLQ', 'ALQ'),
+                           'ABRL',all$BsmtFinType2)
+all$BsmtFinType2 %<>% factor(levels = c('None','Unf','ABRL','GLQ'))
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
+  ggplot( aes(x=BsmtFinType2,
+              y=SalePrice)) +
+  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
+  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  scale_y_continuous(labels = comma) + 
+  geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
+  theme_bw()+
+  theme(axis.text.x = element_text(hjust = 1),
+        panel.grid.major=element_line(colour=NA))
+```
 
 
 ##### 剩餘的Basement
@@ -872,13 +938,13 @@ na_col[names(na_col) %>% str_detect("MasVnr") %>% which]
 
 ```
 
-通常房子有 veneer area,應該也會有 masonry veneer type,來確認一下是不是area 和type的NA都是互相存在在同一筆
+通常房子有 veneer area,應該也會有 masonry veneer type，來確認一下是不是area 和type的NA都是互相存在在同一筆。
 
 ```{r Masonry1}
 length(which(is.na(all$MasVnrType) & is.na(all$MasVnrArea)))
 ```
 
-兩者的NA幾乎都出現在同一筆資料,也就是說type多一筆NA,我就用眾數來填補;但是2611列AREA有值,最多的因子是none,所以用第二多的來填補
+兩者的NA幾乎都出現在同一筆資料，也就是說type多一筆NA，我就用眾數來填補;但是2611列AREA有值，最多的因子是none,所以用第二多的來填補。
 
 
 ```{r Masonry2}
@@ -917,16 +983,17 @@ grid.arrange(
 ```
 
 從平均和中位數來看,Brick Common和None似乎在銷售價格上很接近,這邊假設普通石造牆壁和木製一樣便宜,
-那這樣我們就把BrkCmn和None合併起來,就能把MasVnrType變數弄成次序的
+那這樣我們就把BrkCmn和None合併起來,就能把MasVnrType變數弄成次序的。
 
-```{r MasVnrType 1}
+```{r MasVnrType1}
 all$MasVnrType<-as.integer(plyr::revalue(all$MasVnrType, 
                                          c('None'=0, 'BrkCmn'=0,
                                            'BrkFace'=1, 'Stone'=2)))
-all %>% filter(!(is.na(SalePrice))) %>% 
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=MasVnrType, y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3') +
+  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
   theme_bw()+
@@ -937,7 +1004,7 @@ all %>% filter(!(is.na(SalePrice))) %>%
 ##### MasVnrArea
 
 ```{r MasVnrArea}
-all$MasVnrArea[is.na(all$MasVnrArea)] <-0
+all$MasVnrArea[is.na(all$MasVnrArea)] <- 0
 ```
 
 
@@ -952,14 +1019,27 @@ all$MasVnrArea[is.na(all$MasVnrArea)] <-0
 * RP   Residential Low Density Park 
 * RM   Residential Medium Density
 
-因為這個變數是土地的分區,有商業區農業區工業區等等,我覺得應該跟Neighborhood有關連
-
-```{r MSZoning}
-all[all$MSZoning %>% is.na(),c('MSZoning', 'Neighborhood',"OverallQual")] 
-```
-4個NA有三個是IDOTRR區一個是Mitchel區
+因為這個變數是土地的分區，有商業區農業區工業區等等,我覺得應該跟Neighborhood有關連。
 
 ```{r MSZoning1}
+all %>% 
+  group_by(MSZoning,Neighborhood) %>% 
+  summarise(value = n()) %>% 
+  xtabs(data = .,value~.) %>% 
+  kable() %>% 
+  scroll_box(width = '100%')
+```
+
+由上表可以看出Neighborhood和MSZoning的關聯性，有些地區主要就是農業用地、有些則是商業用地，剩下大部分都是住宅。所以後面會用和Neighborhood有關的方式填補回NA。
+
+```{r MSZoning2}
+all[all$MSZoning %>% is.na(),c('MSZoning', 'Neighborhood',"OverallQual")] 
+```
+
+
+4個NA有三個是IDOTRR區一個是Mitchel區。
+
+```{r MSZoning3}
 #IDOTRR
 filter(all,Neighborhood == "IDOTRR",OverallQual<=5)$MSZoning %>% table
 #Mitchel
@@ -967,9 +1047,9 @@ filter(all,Neighborhood == "Mitchel",OverallQual<=5)$MSZoning %>% table
 ```
 
 
-因此這邊1916 2217 2251 將用RM填補,2905將用RL填補
+因此這邊1916 2217 2251 將用RM填補，2905將用RL填補。
 
-```{r MSZoning2}
+```{r MSZoning4}
 all[c(1916,2217,2251),"MSZoning"] <- "RM"
 all[2905,"MSZoning"] <- "RL"
 all$MSZoning %<>% as.factor()
@@ -993,12 +1073,14 @@ na_col[names(na_col) %>% str_detect("Kitchen") %>% which]
 ```{r KitchenQual}
 table(all$KitchenQual)
 all$KitchenQual[is.na(all$KitchenQual)] <- 'TA' #將最多的填補回去
-all$KitchenQual<-as.integer(plyr::revalue(all$KitchenQual, c('None' = 0, 'Po' = 1, 'Fa' = 2,
-                                                       'TA' = 3,'Gd' = 4, 'Ex' = 5)))
-all %>% filter(!(is.na(SalePrice))) %>% 
+all$KitchenQual<-as.integer(plyr::revalue(all$KitchenQual, 
+                                          c('None' = 0, 'Po' = 1, 'Fa' = 2,
+                                            'TA' = 3,'Gd' = 4, 'Ex' = 5)))
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=KitchenQual, y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3') +
+  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
   theme_bw()+
@@ -1033,27 +1115,31 @@ all$Utilities <- NULL
 na_col[names(na_col) %>% str_detect("Functional") %>% which]
 #眾數填補
 all$Functional[is.na(all$Functional)] <- names(sort(-table(all$Functional)))[1]
-```
-
-看起來能轉成次序
-
-```{r Functional1}
-all$Functional <- as.integer(plyr::revalue(all$Functional, c('Sal'=0, 'Sev'=1,
-                                                       'Maj2'=2, 'Maj1'=3,
-                                                       'Mod'=4, 'Min2'=5,
-                                                       'Min1'=6, 'Typ'=7)))
 all %>% filter(!(is.na(SalePrice))) %>% 
-  ggplot( aes(x=Functional, y=SalePrice)) +
+  ggplot( aes(x=factor(Functional,
+                       levels =  c('Sal','Sev',
+                                   'Maj2','Maj1',
+                                   'Mod','Min2',
+                                   'Min1','Typ')), 
+              y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3') +
+  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
+  xlab('Functional') + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
   theme_bw()+
   theme(axis.text.x = element_text(hjust = 1),
         panel.grid.major=element_line(colour=NA))
 ```
 
+看起來沒辦法轉成次序，且Min1&Min2看起來沒甚麼差，Maj1和Mod看起來也沒甚麼差但是Mod組內標準差太高了我不敢將它跟Maj1合併，這個變數就把Min1&Min2合併成Min然後轉成factor吧。
 
+
+```{r Functional2}
+all$Functional <- ifelse(all$Functional %in% c('Min2','Min1'),
+                         'Min',all$Functional)
+all$Functional %<>% as.factor()
+```
 #### Exter
 
 ```{r Exter}
@@ -1108,12 +1194,14 @@ table(all$Exterior2nd)
 * Po   Poor
 
 ```{r ExterQual}
-all$ExterQual<-as.integer(plyr::revalue(all$ExterQual, c('None' = 0, 'Po' = 1, 'Fa' = 2,
-                                                   'TA' = 3,'Gd' = 4, 'Ex' = 5)))
-all %>% filter(!(is.na(SalePrice))) %>% 
+all$ExterQual<-as.integer(plyr::revalue(all$ExterQual,
+                                        c('None' = 0, 'Po' = 1, 'Fa' = 2,
+                                          'TA' = 3,'Gd' = 4, 'Ex' = 5)))
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=ExterQual, y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3') +
+  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
   theme_bw()+
@@ -1136,10 +1224,11 @@ all$ExterCond <- as.integer(plyr::revalue(all$ExterCond,
                                           c('None' = 0, 'Po' = 1, 'Fa' = 2,
                                             'TA' = 3,'Gd' = 4, 'Ex' = 5)))
 
-all %>% filter(!(is.na(SalePrice))) %>% 
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=ExterCond, y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3') +
+  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
   theme_bw()+
@@ -1252,10 +1341,11 @@ all$HeatingQC <- as.integer(plyr::revalue(all$HeatingQC,
                                         c('None' = 0, 'Po' = 1, 'Fa' = 2,
                                           'TA' = 3,'Gd' = 4, 'Ex' = 5)))
 
-all %>% filter(!(is.na(SalePrice))) %>% 
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=HeatingQC, y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3') +
+  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
   theme_bw()+
@@ -1344,10 +1434,11 @@ table(all$LandSlope)
 all$LandSlope <- as.integer(plyr::revalue(all$LandSlope, 
                                           c('Sev' = 0, 'Mod' = 1, 'Gtl' = 2)))
 
-all %>% filter(!(is.na(SalePrice))) %>% 
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=LandSlope, y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3') +
+  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
   theme_bw()+
@@ -1371,14 +1462,15 @@ all$LandSlope %<>% as.factor()
 * 2FmCon Two-family Conversion; originally built as one-family dwelling
 * Duplx Duplex
 * TwnhsE Townhouse End Unit
-* TwnhsI Townhouse Inside Unit
-* 註:TwnhsI 在資料裡面少了個I
+* TwnhsI Townhouse Inside Unit  
+註:TwnhsI 在資料裡面少了個I
 
 ```{r BldgType}
-all %>% filter(!(is.na(SalePrice))) %>% 
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=as.factor(BldgType), y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3') +
+  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
   theme_bw()+
@@ -1408,10 +1500,11 @@ all$BldgType <- as.factor(all$BldgType)
 * SLvl     Split Level
 
 ```{r HouseStyle}
-all %>% filter(!(is.na(SalePrice))) %>% 
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=HouseStyle, y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3') +
+  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
   theme_bw()+
@@ -1503,10 +1596,11 @@ PavedDrive: Paved driveway
 table(all$PavedDrive)
 all$PavedDrive<-as.integer(plyr::revalue(all$PavedDrive,
                                          c('N'=0, 'P'=1, 'Y'=2)))
-all %>% filter(!(is.na(SalePrice))) %>% 
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=PavedDrive, y=SalePrice)) +
   geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3') +
+  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) +
   theme_bw()+
@@ -1526,14 +1620,12 @@ all$MoSold <- as.factor(all$MoSold)
 grid.arrange(
   ggplot(all[!is.na(all$SalePrice),], aes(x=as.factor(YrSold), y=SalePrice)) +
     geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2')+
-    geom_bar(stat='summary', fun.y = "sd", fill='deeppink3') +
     scale_y_continuous(breaks= seq(0, 800000, by=25000), labels = comma) +
     geom_label(stat = "count", aes(label = ..count.., y = ..count..)) +
     coord_cartesian(ylim = c(0, 200000)) +
     geom_hline(yintercept=163000, linetype="dashed", color = "red"), #dashed line is median SalePrice
   ggplot(all[!is.na(all$SalePrice),], aes(x=MoSold, y=SalePrice)) +
     geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2')+
-    geom_bar(stat='summary', fun.y = "sd", fill='deeppink3') +
     scale_y_continuous(breaks= seq(0, 800000, by=25000), labels = comma) +
     geom_label(stat = "count", aes(label = ..count.., y = ..count..)) +
     coord_cartesian(ylim = c(0, 200000)) +
@@ -1541,6 +1633,7 @@ grid.arrange(
   widths=c(1,2)
   )
 ```
+
 
 #### MSSubClass
 
@@ -1571,14 +1664,37 @@ all$MSSubClass <- as.factor(all$MSSubClass)
 
 ```
 
+###小結
 
+檢視一下處理過後連續變數和類別變數數量。
 
-##特徵組合
+```{r afterClean}
+num_var2 <- which(sapply(all, is.numeric)) 
+factor_var <- which(sapply(all, is.factor))
+cat('總共有', length(num_var2), '連續變數, and',
+    length(factor_var), '類別變數')
+```
+
+類別變數被我從43個減少到24個、數值變數則從38個增加到55個，比較有利於後續模型建模。
+
+## 探索資料分析
+
 ### 相關性
 
-由於前面資料清洗的部分已經先處理過資料一輪，下面再畫一次處理前和處理後數值變數相關性的圖
+由於前面資料清洗的部分已經先處理過資料一輪，下面再畫一次處理前和處理後數值變數相關性的圖來比較一下差異。這邊因為corrplot不是grob物件，沒辦法用grid.arrange，[stackoverflow](https://stackoverflow.com/questions/53734543/converting-corrplot-output-to-grob)這邊有解法能夠將corrplot轉成grob物件，但是我還是先用base套件來繪圖。
 
-```{r CorplotAfter}
+```{r CorplotAfter,warning=F,out.width='\\textwidth',fig.height=10,fig.width=12}
+#相關性
+CorNumvar_after <- cor(all[, num_var2], 
+                  use="pairwise.complete.obs") 
+CorSortName_after <- sort(CorNumvar_after[,'SalePrice'], 
+                      decreasing = TRUE) %>% 
+                     as.matrix() %>% 
+                     apply(1, function(x) abs(x)>0.5) %>% 
+                     which() %>% 
+                     names()
+CorNumvarSort <- CorNumvar_after[CorSortName_after, CorSortName_after]
+
 oldpar <- par()
 par(mfrow = c(1,2))
 corrplot.mixed(cor_numvar_sort,
@@ -1603,36 +1719,148 @@ par(oldpar)
 ```
 
 
-###重要性
+### 重要性
 
 <span style="color:red">隨機森林</span>有個很好用的功能就是它能幫你選出對預測有幫助的特徵。它的作法就是底層建一大堆樹，每一根樹都會隨機對資料抽n個樣本，對特徵隨機抽y個特徵。那為什麼說它能幫你挑選特徵呢，因為它能對預測效果好的樹count它所使用的特徵，最後再排序每個特徵被選取的次數來建立特徵的重要性。
 
-```{r RandomForest,eval = FALSE}
+```{r RandomForest,eval = FALSE,}
 set.seed(2018)
-#前1460個會test data ,79欄為saleprice
-quick_RF <- randomForest(x=all[1:1460,-80], y=all$SalePrice[1:1460], ntree=100,importance=TRUE)
+quick_RF <- randomForest(x=all %>% 
+                            filter(!(is.na(SalePrice))) %>% 
+                            select(-SalePrice,-Id),
+                         
+                         y=all %>% 
+                            filter(!(is.na(SalePrice))) %>% 
+                            "$"(SalePrice),
+                         ntree=100,importance=TRUE)
 imp_RF <- importance(quick_RF)
-imp_DF <- data.frame(Variables = row.names(imp_RF), MSE = imp_RF[,1])
-imp_DF <- imp_DF[order(imp_DF$MSE, decreasing = TRUE),]
+imp_DF <- data.frame(Variables = row.names(imp_RF),
+                     MSE = imp_RF[,1]) %>% 
+          arrange(desc(MSE))
 
-important <- 
-ggplot(imp_DF[1:20,], aes(x=reorder(Variables, MSE), y=MSE, fill=MSE)) + 
-  geom_bar(stat = 'identity') + 
-  labs(x = 'Variables', y= '% increase MSE if variable is randomly permuted') + 
-  coord_flip() + theme(legend.position="none") +
-  theme(axis.text.y = element_text(size = 12,face = 'bold'))
-important
+important <- ggplot(imp_DF[1:30,], 
+                    aes(x=reorder(Variables, MSE),
+                        y=MSE, 
+                        fill=MSE)) + 
+             geom_bar(stat = 'identity') + 
+             scale_y_continuous(labels = function(x)paste0(x,'%')) +
+             labs(x = '變數', 
+                  y= '替換掉MSE會提升的%數') + 
+             coord_flip() + 
+             theme(legend.position="none",
+                   axis.text.x = element_text(size = 25,
+                                              face = 'bold'),
+                   axis.text.y = element_text(size = 30,
+                                              face = 'bold'),
+                   axis.title.x = element_text(size = 30,
+                                               face = 'bold'),
+                   axis.title.y = element_text(size = 30,
+                                               face = 'bold')) 
 ```
 
 
+![](output/importance.png)
 
+最重要的幾個變數GrLivArea、Neighborhood和OverallQual都超過10%，表示如過拿掉該變數誤差大約會提升10%以上。接下來幾個小節我會依照重要性排名前幾名做個簡單的EDA並且視覺化它們。
 
+###和GrLivArea相關特徵
 
+```{r GrLivAreaEDA}
+grid.arrange(all %>% ggplot() +
+               geom_density(aes(x = GrLivArea),
+                            fill = 'pink',color = 'deeppink') + 
+               GGvisualize_theme(),
+             all %>% ggplot() +
+               geom_density(aes(x = X1stFlrSF),
+                            fill = 'pink',color = 'deeppink') + 
+               GGvisualize_theme(),
+             all %>% ggplot() +
+               geom_density(aes(x = X2ndFlrSF),
+                            fill = 'pink',color = 'deeppink') + 
+               GGvisualize_theme(),
+             all %>% filter() %>% ggplot()+
+               geom_density(aes(x = LowQualFinSF),
+                            fill = 'pink',color = 'deeppink') + 
+               GGvisualize_theme(),
+             all %>% ggplot() +
+               geom_density(aes(x = TotalBsmtSF),
+                            fill = 'pink',color = 'deeppink') + 
+               GGvisualize_theme(),
+             all %>% filter(LotArea< 50000) %>% ggplot()+
+               geom_density(aes(x = LotArea) ,
+                            fill = 'pink',color = 'deeppink') + 
+               GGvisualize_theme(),
+             all %>% ggplot()+
+               geom_density(aes(x = LotFrontage),
+                            fill = 'pink',color = 'deeppink') + 
+               GGvisualize_theme(),
+             all %>% ggplot() +
+               geom_density(aes(x = TotRmsAbvGrd),
+                            fill = 'pink',color = 'deeppink') + 
+               scale_x_continuous(breaks = seq(0,max(all$TotRmsAbvGrd))) + 
+               GGvisualize_theme(),
+             layout_matrix = matrix(1:8,4,2,byrow=TRUE))
 
+grid.arrange(all %>% ggplot() +
+               geom_point(aes(x = GrLivArea ,y=SalePrice),
+                            fill = 'pink',color = 'deeppink') + 
+               scale_x_continuous(breaks = seq(0,6000,1000),limits = c(0,7000)) + 
+               scale_y_continuous(limits = c(0,700000)) + 
+               GGvisualize_theme(),
+             all %>% ggplot() +
+               geom_point(aes(x = X1stFlrSF ,y=SalePrice),
+                            fill = 'pink',color = 'deeppink') + 
+               scale_x_continuous(breaks = seq(0,6000,1000),limits = c(0,7000)) + 
+               scale_y_continuous(limits = c(0,700000)) + 
+               GGvisualize_theme(),
+             all %>% filter(X2ndFlrSF != 0 ) %>% 
+               ggplot() +
+               geom_point(aes(x = X2ndFlrSF ,y=SalePrice),
+                            fill = 'pink',color = 'deeppink') + 
+               scale_x_continuous(breaks = seq(0,6000,1000),limits = c(0,7000)) + 
+               scale_y_continuous(limits = c(0,700000)) + 
+               GGvisualize_theme(),
+             all %>% filter(LowQualFinSF != 0 ) %>% 
+               ggplot()+
+               geom_point(aes(x = LowQualFinSF ,y=SalePrice),
+                          fill = 'pink',color = 'deeppink') + 
+               scale_x_continuous(breaks = seq(0,6000,1000),limits = c(0,7000)) + 
+               scale_y_continuous(limits = c(0,700000)) + 
+               GGvisualize_theme(),
+             all %>% ggplot() +
+               geom_point(aes(x = TotalBsmtSF ,y=SalePrice),
+                            fill = 'pink',color = 'deeppink') + 
+               scale_x_continuous(breaks = seq(0,6000,1000),limits = c(0,7000)) + 
+               scale_y_continuous(limits = c(0,700000)) + 
+               GGvisualize_theme(),
+             all %>% ggplot() +
+               geom_point(aes(x = TotRmsAbvGrd ,y=SalePrice),
+                          fill = 'pink',color = 'deeppink') + 
+               GGvisualize_theme(),
+             all %>% filter(LotArea< 50000) %>% ggplot()+
+               geom_point(aes(x = LotArea ,y=SalePrice) ,
+                            fill = 'pink',color = 'deeppink') + 
+               scale_x_continuous(breaks = seq(0,6000,1000),limits = c(0,7000)) + 
+               scale_y_continuous(limits = c(0,700000)) + 
+               GGvisualize_theme(),
+             all %>% ggplot()+
+               geom_point(aes(x = LotFrontage ,y=SalePrice),
+                            fill = 'pink',color = 'deeppink') + 
+               scale_x_continuous(breaks = seq(0,6000,1000),limits = c(0,7000)) + 
+               scale_y_continuous(limits = c(0,700000)) + 
+               GGvisualize_theme(),
+             
+             layout_matrix = matrix(1:8,4,2,byrow=TRUE))
+```
 
-
-
-
+GrLivArea: Above grade (ground) living area square feet
+1stFlrSF: First Floor square feet
+2ndFlrSF: Second floor square feet
+LowQualFinSF: Low quality finished square feet (all floors)
+TotalBsmtSF: Total square feet of basement area
+LotArea: Linear feet of size in square feet
+LotFrontage: Linear feet of street connected to property
+TotRmsAbvGrd: Total rooms above grade (does not include bathrooms)
 
 
 

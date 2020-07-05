@@ -23,7 +23,7 @@ knitr::opts_knit$set(root.dir ="D:/r_project/data-analysis/house_sale_predict")
 >  With 79 explanatory variables describing (almost) every aspect of residential homes in Ames, Iowa, this competition challenges you to predict the final price of each home.
 
 
-這次的資料是來自於[Kaggle](https://www.kaggle.com/c/house-prices-advanced-regression-techniques)，題目是要預測美國愛荷華州的埃姆斯城市的房價。我會進行資料探索、特徵工程和一些資料視覺，最後我會運用LASSO迴歸、XGBoost和SVM來建模，目前我是第885名(TOP19%)，但是隨著時間流逝大概會一直持續下降吧......
+這次的資料是來自於[Kaggle](https://www.kaggle.com/c/house-prices-advanced-regression-techniques)，題目是要預測美國愛荷華州的埃姆斯城市的房價。我會進行資料探索、特徵工程和一些資料視覺，最後我會運用LASSO迴歸、XGBoost和SVM來建模，目前我是第657名(TOP13%)，但是隨著時間流逝大概會一直持續下降吧......
 
 # 前置作業
 
@@ -83,7 +83,7 @@ cat("數值變數有",length(num_var),"個",",類別變數有",length(char_var),
 ```{r saleprice plot}
 all %>% 
   filter(!(is.na(SalePrice))) %>% 
-  ggplot(aes(x = SalePrice)) + 
+  ggplot(aes(x = SalePrice )) + 
   geom_histogram(fill="deeppink2",
                  binwidth = 10000) +
   scale_x_continuous(breaks= seq(0, 800000, by=100000),
@@ -112,7 +112,7 @@ all %>%
 ## 數值變數和目標變數的相關性
 探索資料第二個步驟就是觀察各個變數和目標變數之間的相關性了，好讓我之後特徵工程比較好處理。
 
-```{r corplot, fig.height = 10, fig.width = 14}
+```{r corplot, fig.height = 9, fig.width = 9}
 cor_numvar <- cor(all[, num_var], 
                   use="pairwise.complete.obs")
 #排序之後挑出去相關性絕對值大於0.4的
@@ -135,7 +135,7 @@ corrplot.mixed(cor_numvar_sort, tl.col="black", tl.pos = "lt")
 
 
 ## OverallQual
-```{r OverallQual_visual, fig.height = 5, fig.width = 8}
+```{r OverallQual_visual, fig.height = 5, fig.width = 8,warning=F}
 grid.arrange(all %>% filter(!(is.na(SalePrice))) %>% 
               ggplot(aes(x=factor(OverallQual), y=SalePrice))+
               geom_boxplot(col='dodgerblue2') + 
@@ -308,7 +308,7 @@ all$MiscFeature <- as.factor(all$MiscFeature)
 all %>% 
   filter(!(is.na(SalePrice))) %>% 
   ggplot(aes(x=MiscFeature, y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
   scale_y_continuous(breaks= seq(0, 800000, by=100000), labels = comma) +
   geom_label(stat = "count", aes(label = ..count.., y = ..count..)) +
   GGvisualize_theme() +
@@ -370,7 +370,7 @@ all$Alley %<>% as.factor()
 all %>% 
   filter(!(is.na(SalePrice))) %>% 
   ggplot(aes(x=Alley, y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2')+
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2')+
   scale_y_continuous(breaks= seq(0, 200000, by=50000), labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
   GGvisualize_theme() +
@@ -396,7 +396,7 @@ all$Fence[is.na(all$Fence)] <- 'None'
 all %>% 
   filter(!(is.na(SalePrice))) %>%
   ggplot(aes(x=Fence, y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2')+
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2')+
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
   GGvisualize_theme() +
@@ -436,7 +436,7 @@ all$FireplaceQu<-as.integer(plyr::revalue(all$FireplaceQu,
 all %>% 
   filter(!(is.na(SalePrice))) %>%
   ggplot(aes(x = FireplaceQu, y = SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2')+
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2')+
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
   GGvisualize_theme() +
@@ -454,7 +454,7 @@ table(all$Fireplaces)
 all %>% 
   filter(!(is.na(SalePrice))) %>%
   ggplot(aes(x = Fireplaces, y = SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2')+
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2')+
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
   GGvisualize_theme()
@@ -476,8 +476,8 @@ LotFrontage: Linear feet of street connected to property
 ```{r LotFrontage_plot,fig.height = 10, fig.width = 14,warning=F}
 all %>% 
   ggplot( aes(x=as.factor(Neighborhood), y=LotFrontage)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='black',width = 0.5) + 
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='black',width = 0.5) + 
   GGvisualize_theme()
 ```
 
@@ -510,7 +510,7 @@ table(all$LotShape)
 all %>% 
   filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=LotShape, y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..))+ 
   GGvisualize_theme()
@@ -613,8 +613,8 @@ table(all$GarageType)
 all %>% 
   filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=GarageFinish, y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
   GGvisualize_theme()
@@ -645,8 +645,8 @@ all$GarageQual <-
 all %>% 
   filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=GarageQual, y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
   scale_x_continuous(breaks = seq(min(all$GarageQual),max(all$GarageQual))) + 
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
@@ -661,8 +661,8 @@ all$GarageQual <- ifelse(all$GarageQual %in% c(0:1),0,
 all %>% 
   filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=GarageQual, y=SalePrice)) +
-  geom_bar(stat = 'summary', fun.y = "median", fill = 'dodgerblue2') +
-  geom_bar(stat = 'summary', fun.y = "sd", fill = 'deeppink3',width = 0.5) +
+  geom_bar(stat = 'summary', fun = "median", fill = 'dodgerblue2') +
+  geom_bar(stat = 'summary', fun = "sd", fill = 'deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..))  + 
   GGvisualize_theme()
@@ -687,8 +687,8 @@ all$GarageCond <-
 all %>% 
   filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=GarageCond, y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
   scale_x_continuous(breaks = seq(min(all$GarageCond),max(all$GarageCond))) + 
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..))  + 
@@ -752,8 +752,8 @@ all$BsmtQual <-
 all %>% 
   filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=BsmtQual, y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..))  + 
   GGvisualize_theme()
@@ -778,8 +778,8 @@ all$BsmtCond <-
 all %>% 
   filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=BsmtCond, y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..))  + 
   GGvisualize_theme()
@@ -804,8 +804,8 @@ all$BsmtExposure <-
 all %>% 
   filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=BsmtExposure, y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..))  + 
   GGvisualize_theme()
@@ -829,8 +829,8 @@ all %>%
   ggplot( aes(x=factor(BsmtFinType1,levels =c('None', 'Unf', 'LwQ',
                                               'Rec', 'BLQ', 'ALQ','GLQ')),
               y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   xlab('BsmtFinType1') +
   geom_label(stat = "count",aes(label = ..count..,y = ..count..))  + 
@@ -847,8 +847,8 @@ all %>%
   filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=BsmtFinType1,
               y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..))  + 
   GGvisualize_theme()
@@ -871,8 +871,8 @@ all %>%
   ggplot( aes(x=factor(BsmtFinType2,levels =c('None', 'Unf', 'LwQ',
                                               'Rec', 'BLQ', 'ALQ','GLQ')),
               y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   xlab('BsmtFinType2') +
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
@@ -891,8 +891,8 @@ all %>%
   filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=BsmtFinType2,
               y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
   GGvisualize_theme()
@@ -957,13 +957,13 @@ all$MasVnrType[is.na(all$MasVnrType)] <- 'None'
 
 grid.arrange(
   ggplot(all, aes(x=MasVnrType, y=SalePrice)) +
-    geom_bar(stat='summary', fun.y = "median", fill='grey')+
+    stat_summary(geom ='bar', fun = "median", fill='grey')+
     scale_y_continuous(labels = comma) + 
     geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
     GGvisualize_theme() + 
     ggtitle("Median"),
   ggplot(all, aes(x=MasVnrType, y=SalePrice)) +
-    geom_bar(stat='summary', fun.y = "mean", fill='black')+
+    stat_summary(geom ='bar', fun = "mean", fill='black')+
     scale_y_continuous(labels = comma) + 
     geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
     GGvisualize_theme() + 
@@ -982,8 +982,8 @@ all$MasVnrType<-as.integer(plyr::revalue(all$MasVnrType,
 all %>% 
   filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=MasVnrType, y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
   GGvisualize_theme()
@@ -1078,8 +1078,8 @@ all$KitchenQual<-as.integer(plyr::revalue(all$KitchenQual,
 all %>% 
   filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=KitchenQual, y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
   GGvisualize_theme()
@@ -1108,7 +1108,7 @@ all$Utilities <- NULL
 * Sev  Severely Damaged
 * Sal  Salvage only
 
-```{r Functional}
+```{r Functional,warning=F}
 na_col[names(na_col) %>% str_detect("Functional") %>% which]
 table(all$Functional)
 #眾數填補
@@ -1121,8 +1121,8 @@ all %>%
                                    'Mod','Min2',
                                    'Min1','Typ')), 
               y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   xlab('Functional') + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
@@ -1192,15 +1192,15 @@ table(all$Exterior2nd)
 * Fa   Fair
 * Po   Poor
 
-```{r ExterQual}
+```{r ExterQual,warning=F}
 all$ExterQual <- as.integer(plyr::revalue(all$ExterQual,
                             c('None' = 0, 'Po' = 1, 'Fa' = 2,
                               'TA' = 3,'Gd' = 4, 'Ex' = 5)))
 all %>% 
   filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=ExterQual, y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
   GGvisualize_theme()
@@ -1225,8 +1225,8 @@ all$ExterCond <-
 all %>% 
   filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=ExterCond, y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
   GGvisualize_theme()
@@ -1333,7 +1333,7 @@ table(all$Heating)
 * Fa   Fair
 * Po   Poor
 
-```{r HeatingQC,warning=F}
+```{r HeatingQC, message=FALSE, warning=FALSE}
 all$HeatingQC <- 
   as.integer(plyr::revalue(all$HeatingQC, 
              c('None' = 0, 'Po' = 1, 'Fa' = 2,
@@ -1342,8 +1342,8 @@ all$HeatingQC <-
 all %>% 
   filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=HeatingQC, y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
   GGvisualize_theme()
@@ -1435,8 +1435,8 @@ all$LandSlope <-
 all %>% 
   filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=LandSlope, y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
   GGvisualize_theme()
@@ -1465,8 +1465,8 @@ all$LandSlope %<>% as.factor()
 all %>% 
   filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=as.factor(BldgType), y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
   GGvisualize_theme()
@@ -1497,8 +1497,8 @@ all$BldgType <- as.factor(all$BldgType)
 all %>% 
   filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=HouseStyle, y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
   GGvisualize_theme()
@@ -1591,8 +1591,8 @@ all$PavedDrive<-as.integer(plyr::revalue(all$PavedDrive,
 all %>% 
   filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=PavedDrive, y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
   GGvisualize_theme()
@@ -1610,18 +1610,22 @@ all$MoSold <- as.factor(all$MoSold)
 all$YrSold <- as.factor(all$YrSold)
 
 grid.arrange(
-  ggplot(all[!is.na(all$SalePrice),], aes(x=as.factor(YrSold), y=SalePrice)) +
-    geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2')+
-    geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  all %>% 
+    filter(!(is.na(SalePrice))) %>% 
+    ggplot(aes(x=as.factor(YrSold), y=SalePrice)) +
+    stat_summary(geom ='bar', fun = "median", fill='dodgerblue2')+
+    stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
     scale_y_continuous(breaks= seq(0, 800000, by=25000), labels = comma) +
     geom_label(stat = "count", aes(label = ..count.., y = ..count..)) +
     coord_cartesian(ylim = c(0, 200000)) +
     geom_hline(yintercept=163000, linetype="dashed", color = "red") + 
   GGvisualize_theme()
   , #dashed line is median SalePrice
-  ggplot(all[!is.na(all$SalePrice),], aes(x=MoSold, y=SalePrice)) +
-    geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2')+
-    geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  all %>% 
+    filter(!(is.na(SalePrice))) %>% 
+    ggplot( aes(x=MoSold, y=SalePrice)) +
+    stat_summary(geom ='bar', fun = "median", fill='dodgerblue2')+
+    stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
     scale_y_continuous(breaks= seq(0, 800000, by=25000), labels = comma) +
     geom_label(stat = "count", aes(label = ..count.., y = ..count..)) +
     coord_cartesian(ylim = c(0, 200000)) +
@@ -1675,7 +1679,7 @@ cat('總共有', length(num_var2), '連續變數, and',
     length(factor_var), '類別變數')
 ```
 
-類別變數被我從43個減少到28個、數值變數則從38個增加到52個，比較有利於後續模型建模。
+類別變數被我從43個減少到29個、數值變數則從38個增加到51個，比較有利於後續模型建模。
 
 ## 探索資料分析&特徵組合
 
@@ -1831,8 +1835,46 @@ CorGrivArea[CorGrivArea_Sort, CorGrivArea_Sort] %>%
   corrplot.mixed(tl.col="black", tl.pos = "lt")
 ```
 
-從相關性檢測可以證明我的推測沒錯，1stFlrSF+2ndFlrSF和GrLivArea相關性等於1(其實也是廢話XD)。其實我本來以為GrLivArea只包含1樓，但是看了分佈圖與相關性圖後才發現還包含2樓。
-其他像是TotRmsAbvGrd和GrLivArea高相關性也很合理，坪數越大房間越多嘛。
+從相關性檢測可以證明我的推測沒錯，1stFlrSF+2ndFlrSF和GrLivArea相關性等於1(其實也是廢話XD)。其實我本來以為GrLivArea只包含1樓，但是看了分佈圖與相關性圖後才發現可能還包含2樓。但是這邊還有另外一個問題1stFlrSF+2ndFlrSF的相關性竟然還比GrLivArea還高，也就是說1stFlrSF和2ndFlrSF還缺另外一個值才會等於GrLivArea。所以我會再這邊新增一個變數包含1stFlrSF+2ndFlrSF替代原本的GrLivArea。  
+另外我會再新增一個特徵是GrLivArea+TotalBsmtSF叫做TotalArea，其包含地上坪數和地下室坪數。
+
+```{r TotalArea,fig.height = 6, fig.width = 8,warning=F}
+all$GrLivArea <- all$X1stFlrSF + all$X2ndFlrSF
+all$TotalArea <- all$GrLivArea + all$TotalBsmtSF
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
+  ggplot(aes(x=TotalArea, y=SalePrice))+
+  geom_point(color='blue') + 
+  geom_smooth(method = "lm", se=FALSE, color="black", aes(group=1)) +
+  scale_y_continuous(breaks= seq(0, 800000, by=100000), labels = comma) +
+  geom_text_repel(aes(label = ifelse(all$TotalArea[!is.na(all$SalePrice)]>7500,
+                                     rownames(all), ''))) + 
+  GGvisualize_theme()
+```
+
+組合出來的特徵相關性提高到0.782。
+
+```{r TotalArea2}
+cor(all$SalePrice, all$GrLivArea, use= "pairwise.complete.obs")
+cor(all$SalePrice, all$TotalArea, use= "pairwise.complete.obs")
+```
+
+另外還要處理524與1299再前面就出現過的離群值，假如踢掉他們TotalArea相關性會提高5%。
+
+```{r TotalArea3}
+cor(all$SalePrice[-c(524, 1299)], 
+    all$GrLivArea[-c(524, 1299)], 
+    use= "pairwise.complete.obs")
+cor(all$SalePrice[-c(524, 1299)], 
+    all$TotalArea[-c(524, 1299)], 
+    use= "pairwise.complete.obs")
+```
+最後在衡量時間與效益的考量下決定將這兩筆踢掉。
+
+
+```{r TotalArea4}
+all <- all[-c(524, 1299),]
+```
 
 ### 地區
 
@@ -1840,8 +1882,8 @@ CorGrivArea[CorGrivArea_Sort, CorGrivArea_Sort] %>%
 grid.arrange(all %>% 
                filter(!(is.na(SalePrice))) %>%
                ggplot(aes(x=Neighborhood, y=SalePrice)) +
-               geom_bar(stat='summary',fun.y = "median",fill='steelblue') +
-               geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+               stat_summary(geom ='bar',fun = "median",fill='steelblue') +
+               stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
                scale_y_continuous(breaks= c(seq(0, 800000, by=50000),
                                             all[!is.na(all$SalePrice),'SalePrice'] %>% 
                                               median()), 
@@ -1875,8 +1917,8 @@ grid.arrange(all %>%
 ```{r NeighborhoodEda2,fig.height = 6, fig.width = 8,warning=F}
 grid.arrange(ggplot(all[!is.na(all$SalePrice),], 
                     aes(x=reorder(Neighborhood, SalePrice, FUN=median), y=SalePrice)) +
-               geom_bar(stat='summary', fun.y = "median", fill='steelblue') + 
-               geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+               stat_summary(geom ='bar', fun = "median", fill='steelblue') + 
+               stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
                labs(x='Neighborhood', y='Median SalePrice') +
                scale_y_continuous(breaks= seq(0, 800000, by=50000), labels = comma) +
                geom_label(stat = "count", 
@@ -1888,8 +1930,8 @@ grid.arrange(ggplot(all[!is.na(all$SalePrice),],
                theme(axis.text.x = element_text(angle = 45, hjust = 1)) , 
              ggplot(all[!is.na(all$SalePrice),], 
                     aes(x=reorder(Neighborhood, SalePrice, FUN=mean), y=SalePrice)) +
-               geom_bar(stat='summary', fun.y = "mean", fill='steelblue') +
-               geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+               stat_summary(geom ='bar', fun = "mean", fill='steelblue') +
+               stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
                labs(x='Neighborhood', y="Mean SalePrice") +
                scale_y_continuous(breaks= seq(0, 800000, by=50000), labels = comma) +
                geom_label(stat = "count", 
@@ -1906,33 +1948,637 @@ grid.arrange(ggplot(all[!is.na(all$SalePrice),],
 我將地區依照銷售價格中位數(上圖)和平均數(下圖)排序並視覺化，我會將StoneBr、NridgHt和NoRidge合併成2(富有區)，將MeadowV、IDOTRR和BrDale合併成0(平民區)，剩下的變為1(中產區)。
 
 ```{r NeighborhoodEda3}
-all$NeighRich[all$Neighborhood %in% c('StoneBr', 'NridgHt', 'NoRidge')] <- 2
-all$NeighRich[!all$Neighborhood %in% c('MeadowV', 'IDOTRR', 'BrDale', 'StoneBr', 'NridgHt', 'NoRidge')] <- 1 
-all$NeighRich[all$Neighborhood %in% c('MeadowV', 'IDOTRR', 'BrDale')] <- 0
+all$NeighCluster[all$Neighborhood %in% c('StoneBr', 'NridgHt', 'NoRidge')] <- 2
+all$NeighCluster[!all$Neighborhood %in% c('MeadowV', 'IDOTRR', 'BrDale', 'StoneBr', 'NridgHt', 'NoRidge')] <- 1 
+all$NeighCluster[all$Neighborhood %in% c('MeadowV', 'IDOTRR', 'BrDale')] <- 0
 
 all %>% 
   filter(!(is.na(SalePrice))) %>% 
-  ggplot( aes(x=NeighRich, y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  ggplot( aes(x=NeighCluster, y=SalePrice)) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
   GGvisualize_theme()
 
+
+
+```
+
+看一下新組出來的變數和銷售價格的相關性0.5831，似乎沒有到像坪數那樣高相關性但也足夠了，在這邊為後續建模降了許多維。
+
+```{r NeighborhoodEda4}
+cor(all$SalePrice, all$NeighCluster, use= "pairwise.complete.obs")
 ```
 
 
+### MSSubClass
+MSSubClass: Identifies the type of dwelling involved in the sale.
+
+* 20  1-STORY 1946 & NEWER ALL STYLES
+* 30  1-STORY 1945 & OLDER
+* 40  1-STORY W/FINISHED ATTIC ALL AGES
+* 45  1-1/2 STORY - UNFINISHED ALL AGES
+* 50  1-1/2 STORY FINISHED ALL AGES
+* 60  2-STORY 1946 & NEWER
+* 70  2-STORY 1945 & OLDER
+* 75  2-1/2 STORY ALL AGES
+* 80  SPLIT OR MULTI-LEVEL
+* 85  SPLIT FOYER
+* 90  DUPLEX - ALL STYLES AND AGES
+* 120  1-STORY PUD (Planned Unit Development) - 1946 & NEWER
+* 150  1-1/2 STORY PUD - ALL AGES
+* 160  2-STORY PUD - 1946 & NEWER
+* 180  PUD - MULTILEVEL - INCL SPLIT LEV/FOYER
+* 190  2 FAMILY CONVERSION - ALL STYLES AND AGES
+
+
+```{r MSSubClassEDA, warning=FALSE}
+grid.arrange(ggplot(all[!is.na(all$SalePrice),], aes(x=MSSubClass, y=SalePrice)) +
+               stat_summary(geom ='bar', fun = "median", fill='blue') +
+               theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+               scale_y_continuous(breaks= seq(0, 800000, by=50000), labels = comma) +
+               geom_label(stat = "count", aes(label = ..count.., y = ..count..), size=3) +
+               geom_hline(yintercept=163000, linetype="dashed", color = "red") +
+               GGvisualize_theme() ,#dashed line is median SalePrice
+             ggplot(data=all, aes(x=MSSubClass)) +
+               geom_histogram(stat='count')+
+               geom_label(stat = "count", aes(label = ..count.., y = ..count..), size=3) +
+               theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+               GGvisualize_theme() 
+  
+)
+```
+
+MSSubClass是用來區分房屋在銷售上的分別，要能將這個特徵組合或轉換其他更有力的特徵需要該領域的domain，這邊就跳過看看分佈。
+
+### 車庫
+
+GarageYrBlt第2593筆資料貌似Keyin錯誤，把它填補回2007。
+
+```{r GarageYrBlt error}
+all[2593,c('GarageYrBlt','YearBuilt','YearRemodAdd')]
+```
+
+看一下跟車庫有關的特徵分佈。
+
+```{r GarageEDA, message=FALSE, warning=FALSE}
+names(all)[names(all) %>% str_detect("Garage") %>% which]
+all$GarageYrBlt[2593] <- 2007
+grid.arrange(ggplot(data=all[all$GarageCars !=0,], aes(x=GarageYrBlt)) +
+               geom_histogram() +
+               GGvisualize_theme() ,
+             ggplot(data=all[all$GarageCars !=0,], aes(x=YearBuilt)) +
+               geom_histogram() +
+               scale_x_continuous(limits = c(1890,2010))+
+               GGvisualize_theme() ,
+             ggplot(data=all, aes(x=as.factor(GarageCars))) +
+               geom_histogram(stat='count') +
+               GGvisualize_theme() ,
+             ggplot(data= all, aes(x=GarageArea)) +
+               geom_histogram() +
+               GGvisualize_theme() ,
+             ggplot(data=all, aes(x=as.factor(GarageCond))) +
+               geom_histogram(stat='count') +
+               GGvisualize_theme() ,
+             ggplot(data=all, aes(x=GarageType)) +
+               geom_histogram(stat='count') +
+               GGvisualize_theme() ,
+             ggplot(data=all, aes(x=as.factor(GarageQual))) +
+               geom_histogram(stat='count') +
+               GGvisualize_theme() ,
+             ggplot(data=all, aes(x=as.factor(GarageFinish))) +
+               geom_histogram(stat='count') +
+               GGvisualize_theme() ,
+              layout_matrix =matrix(c(1,2,3,4,6,6,5,7,8),3,3,byrow=TRUE)
+  
+)
+```
+
+
+這邊我把GarageYrBlt和YearBuilt放在一起觀察分佈，看起來許多房子在建立的時候就蓋好車庫了，本來預期分佈不一致的話這邊還可以試試組幾個有趣的特徵。
 
 
 
+### 量化廁所數量
+
+這邊我將每間房子廁所量化加總，一間廁所+1半間廁所+0.5。
+
+```{r bathroom, message=FALSE, warning=FALSE}
+names(all)[names(all) %>% str_detect("Bath") %>% which]
+all$TotBathrooms <- all$FullBath + (all$HalfBath*0.5) + all$BsmtFullBath + (all$BsmtHalfBath*0.5)
+
+grid.arrange(
+  ggplot(data=all[!is.na(all$SalePrice),], 
+         aes(x=as.factor(TotBathrooms), 
+             y=SalePrice))+
+    geom_point(col='blue') + 
+    geom_smooth(method = "lm", se=FALSE, color="black", aes(group=1)) +
+    labs(y = 'SalePrice(千元)')+
+    scale_y_continuous(breaks= seq(0, 800000, by=100000), 
+                       labels = function(d){
+                            d/1000
+                                  }) +
+               GGvisualize_theme(),
+  ggplot(data=all, aes(x=as.factor(TotBathrooms))) +
+    geom_histogram(stat='count',width = 0.5)+
+    GGvisualize_theme())
+
+cor(all$SalePrice[!is.na(all$SalePrice)], all$TotBathrooms[!is.na(all$SalePrice)])
+```
+
+做出了一個有用的特徵，相關性有0.63。從上圖可以看出大部分的房子廁所數量都在2間左右，廁所數量越多銷售價格的標準差也就越大，其中5、6間反而銷售價格偏低，可能是因為房子是屬於郊區坪數大，房間廁所也多價格也相較便宜。但是基本上4間以下廁所的房屋還是能遵守這個規則。
+
+### 屋齡
+
+屋齡我再猶豫要使用改建年來減還是建造年來減會對預測有幫助，我索性兩個都建立並且都將其視覺化和計算相關性跟擬合一條迴歸線來觀察。
+
+```{r age, message=FALSE}
+all$Age <- as.numeric(as.character(all$YrSold))-all$YearRemodAdd
+all$Age2 <- as.numeric(as.character(all$YrSold))-all$YearBuilt
+library(ggpmisc)
+grid.arrange(
+  all[!is.na(all$SalePrice),] %>%
+    ggplot(aes(x=Age, y=SalePrice))+
+    geom_point(col='blue') + 
+    geom_smooth(method = "lm", se=T,level = 0.95, color="black") +
+    stat_poly_eq(formula =  y~x,
+                 aes(label = paste(..rr.label..)), 
+                 parse = TRUE)+
+    scale_y_continuous(breaks= seq(0, 800000, by=100000), labels = comma) +
+    GGvisualize_theme(),
+  all[!is.na(all$SalePrice),] %>%
+    ggplot(aes(x=Age2, y=SalePrice))+
+    geom_point(col='blue') + 
+    geom_smooth(method = "lm", se=T, color="black", aes(group=1)) +
+    stat_poly_eq(formula =  y~x,
+                 aes(label = paste(..rr.label..)), 
+                 parse = TRUE)+
+    scale_y_continuous(breaks= seq(0, 800000, by=100000), labels = comma) +
+    GGvisualize_theme()
+  
+)
+cor(all$SalePrice[!is.na(all$SalePrice)], all$Age[!is.na(all$SalePrice)])
+cor(all$SalePrice[!is.na(all$SalePrice)], all$Age2[!is.na(all$SalePrice)])
+```
+
+從圖形上來看似乎用Age2(建造年分)會比較，圖形上的各點似乎比較貼近擬合的迴歸線。另外擬合的迴歸線R平方也是Age2比較好一些，雖然也沒提高多少。相關性也是Age2比較高，所以就決定用建造年分來當屋齡相減的計算。
+
+製作屋齡後發現，屋齡與銷售價格呈現中等的負相關，越舊的房子銷售價格越低，房子似乎沒有想像中的保值。我會分別製作是否改建以及是否為新屋的特徵，並且測試看看他們的效果。
+
+```{r age2, message=FALSE}
+all$Age2 <- NULL
+all$Age <- as.numeric(as.character(all$YrSold))-all$YearRemodAdd
+```
 
 
+### 是否改建
+
+這邊我根據是否改建嘗試組出一個新特徵，並將其視覺化。
+
+```{r Remod}
+all$Remod <- ifelse(all$YearBuilt==all$YearRemodAdd, 0, 1) 
+ggplot(all[!is.na(all$SalePrice),], aes(x=as.factor(Remod), y=SalePrice)) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='black',width = 0.5) +
+  geom_label(stat = "count", aes(label = ..count.., y = ..count..), size=6) +
+  scale_y_continuous(breaks= seq(0, 800000, by=50000), labels = comma) +
+  theme_grey(base_size = 18) +
+  geom_hline(yintercept=163000, linetype="dashed") +
+  GGvisualize_theme()
+```
+
+上圖是根據是否改建分組後各組的銷售價格中位數，黑色是標準差、黑色虛線則是整體銷售價格的中位數。可以看出有改建過後的房子其銷售價格比較低，可能反應未改建(都更)的房子比較有價值，這可能跟地區有關。
 
 
+```{r Remod2}
+ggplot(all[!is.na(all$SalePrice),], aes(x=as.factor(Remod), y=SalePrice)) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='black',width = 0.5) +
+  geom_label(stat = "count", aes(label = ..count.., y = ..count..), size=6) +
+  scale_y_continuous(breaks= seq(0, 800000, by=50000), labels = comma) +
+  theme_grey(base_size = 18) +
+  facet_wrap(NeighCluster~.)+
+  geom_hline(yintercept=163000, linetype="dashed") +
+  GGvisualize_theme()
+```
+
+我將改建和地區交叉視覺化後發現富有地區比較傾向改建後的房子比較有價值，像大安區或信義區改建過後的新房子總是比較吸引人比較貴。中產地區房屋量為最大宗其未改建的房子銷售價格比較貴一點，就像南港萬華北投等比較蛋白的地區，還有許多正在等待改建的老房子，可能10年後這張圖的銷售價格比例就會有大幅變化也不一定。
+
+另外我還做了無母數檢定kruskal.test來檢定改建這個新特徵其分組的銷售價格中位數有無顯著上差異，報表上檢定出來是顯著拒絕虛無假設(中位數無差異)，雖然我覺得好像差異並不大但是單位畢竟是美金...
+
+```{r Remod3}
+kruskal.test(data = all[!is.na(all$SalePrice),],SalePrice ~ Remod) 
+
+```
+
+### 是否新屋
+
+這邊我想新增一個特徵來判斷它是否為新屋，首先要先定義屋齡幾年以下的房屋為新屋？通常這需要房地產領域的知識，那如果我們沒有怎辦呢？那就隨意訂個比較合理的新屋屋齡最大值，然後從0計算到最大值的中位數價格差、標準差以及包含房屋數量來做個簡易分析比較吧！
+
+```{r isNew}
+
+SalePriceDiff <- data.frame()
+for (i in 0:5) {
+  all$IsNew <- ifelse(as.numeric(as.character(all$YrSold)) - all$YearBuilt <= i, 1, 0)
+  medianDiff <- 
+    median(all[all$IsNew == 1 & !is.na(all$SalePrice),'SalePrice']) -
+    median(all[all$IsNew == 0 & !is.na(all$SalePrice),'SalePrice'])
+  SalePriceDiff <- rbind(SalePriceDiff, 
+                         data.frame(
+                           year = i,
+                           medianDiff = medianDiff,
+                           sd_0 =  
+                             sd(all[all$IsNew == 0 & !is.na(all$SalePrice),'SalePrice']),
+                           sd_1 =  
+                             sd(all[all$IsNew == 1 & !is.na(all$SalePrice),'SalePrice']),
+                           IsNewNum = table(all$IsNew)[2],
+                           IsNewNum_train = table(all[!is.na(all$SalePrice),'IsNew'])[2]
+                           )
+                         )
+}
+SalePriceDiff
+```
+
+從中位數價格差來看屋齡0年使分組差異達到最大再來是1和3年，但是0年包含的訓練資料筆數只有62筆，有點少！1、3年看起來比較理想，價格差在84000包含資料筆數又多。1~2年訓練資料多納入了100筆和39筆中位數皆使中位數差縮小，到3年增加36筆資料又把中位數差拉回來。這樣的數據其實挺有趣的，如果在第3年這一塊增加的36筆數據都是偏高價位，是不是能做一個假設：買新房做投資的投資客大概都在3年之間脫手?當然要驗證這件事可能還需要搭配物件的歷史成交資訊來分析，但也不是目前的重點就先跳過XD。  
+
+另外，從標準差角度切入0年的分組1是最小的但是0的標準差是最大的。想挑屋齡3年以下的分組界線，但是簡易分析又不太符合我所想要的預期(屋齡界線提高、價格差異下降幅大不大、組內變異低、包含資料筆數多)，我再多做個簡易單迴歸協助我判斷。
 
 
+```{r isNew2}
+
+SalePriceDiff <- data.frame()
+for (i in 0:5) {
+  all$IsNew <- ifelse(as.numeric(as.character(all$YrSold)) - all$YearBuilt <= i, 1, 0)
+  medianDiff <- 
+    median(all[all$IsNew == 1 & !is.na(all$SalePrice),'SalePrice']) -
+    median(all[all$IsNew == 0 & !is.na(all$SalePrice),'SalePrice'])
+  lm_isnew <- lm(log(all$SalePrice)~all$IsNew) %>% summary
+  SalePriceDiff <- rbind(SalePriceDiff, 
+                         data.frame(
+                           year = i,
+                           medianDiff = medianDiff,
+                           IsNewNum = table(all$IsNew)[2],
+                           IsNewNum_train = table(all[!is.na(all$SalePrice),'IsNew'])[2],
+                           rmse = lm_isnew$sigma,
+                           rSquare = lm_isnew$adj.r.squared
+                         )
+  )
+}
+SalePriceDiff
+```
+
+根據簡單迴歸呢，看起來好像應該選5年以內，但我覺得銷售價格差下降太多了，0年R平方太低沒甚麼效益，果然還是3年以內最合適。  
+
+```{r isNew3}
+all$IsNew <- ifelse(as.numeric(as.character(all$YrSold)) - all$YearBuilt <= 3, 1, 0)
+table(all$IsNew)
+ggplot(all[!is.na(all$SalePrice),], aes(x=as.factor(IsNew), y=SalePrice)) +
+  stat_summary(geom ='bar', fun = "median", fill='steelblue') +
+  stat_summary(geom ='bar', fun = "sd", fill='black',width = 0.5) +
+  geom_label(stat = "count", aes(label = ..count.., y = ..count..), size=6) +
+  scale_y_continuous(breaks= seq(0, 800000, by=50000), labels = comma) +
+  theme_grey(base_size = 18) +
+  geom_hline(yintercept=163000, linetype="dashed") +
+  GGvisualize_theme()
 
 
+```
+
+然後呢，再製作這個簡單迴歸分析時突然有個idea，如果我將屋齡分類的簡單迴歸效益評比擴展到60呢?換句話說，嘗試從屋齡分界找出一個臨界點能比較有效的預測銷售價格，而其代表的意義可能是在那屋齡年限內人們將房屋賣掉所能獲取最大利益價格，也就是市場上最大所能偏好幾年以內的房子。
+
+###  最大偏好屋齡
+
+```{r IsNewMax}
+SalePriceDiff <- data.frame()
+for (i in 0:60) {
+  all$IsNewMax <- ifelse(as.numeric(as.character(all$YrSold)) - all$YearBuilt <= i, 1, 0)
+  medianDiff <- 
+    median(all[all$IsNewMax == 1 & !is.na(all$SalePrice),'SalePrice']) -
+    median(all[all$IsNewMax == 0 & !is.na(all$SalePrice),'SalePrice'])
+  lm_isnew <- lm(log(all$SalePrice)~all$IsNewMax) %>% summary
+  SalePriceDiff <- rbind(SalePriceDiff, 
+                         data.frame(
+                           year = i,
+                           medianDiff = medianDiff,
+                           IsNewNum = table(all$IsNewMax)[2],
+                           IsNewNum_train = table(all[!is.na(all$SalePrice),'IsNewMax'])[2],
+                           rmse = lm_isnew$sigma,
+                           rSquare = lm_isnew$adj.r.squared
+                         )
+  )
+}
+SalePriceDiff
+grid.arrange(
+  SalePriceDiff %>%  
+    ggplot(aes(x = year,y = rSquare,group = 1)) + 
+    geom_point() +
+    geom_vline(xintercept  = 22,linetype = 'dashed') +
+    geom_text(aes(label = round(rSquare,3)),
+              color = ifelse(max(SalePriceDiff$rSquare) == SalePriceDiff$rSquare,
+                             'red','transparent'),
+              vjust = 1.5,
+              size = 5) + 
+    scale_x_continuous(
+      breaks = c(seq(0,60,10),
+                 SalePriceDiff[which(SalePriceDiff$rSquare == max(SalePriceDiff$rSquare)),
+                               'year'])) +
+    geom_line() + 
+    GGvisualize_theme(),
+  SalePriceDiff %>%  
+    ggplot(aes(x = year,y = medianDiff)) + 
+    geom_bar(stat = 'identity') +
+    geom_vline(xintercept  = 22,linetype = 'dashed') +
+    geom_text(aes(label = medianDiff),
+              color = ifelse(max(SalePriceDiff$rSquare) == SalePriceDiff$rSquare,
+                             'red','transparent'),
+              vjust = -0.75,
+              size = 5) + 
+    scale_y_continuous(labels = function(d){
+      d/10000
+    },limits = c(0,110000),name = '分組中位數差(萬元)')+
+    scale_x_continuous(
+      breaks = c(seq(0,60,10),
+                 SalePriceDiff[which(SalePriceDiff$rSquare == max(SalePriceDiff$rSquare)),
+                               'year'])) +
+    GGvisualize_theme()
+  
+)
+rm(SalePriceDiff)
+
+```
+我選擇屋齡界限在22年以內，原因是它為R平方的最大值，從它之後開始慢慢遞減。不過實際上從上圖可以確認其實從大約屋齡30年不僅是R平方，銷售價格組間中位數差也開始明顯下降。
+
+## 模型準備
+
+踢掉高相關性的變數
+
+```{r modelPrepare1}
+dropVars <- c('YearRemodAdd', 'GarageYrBlt', 'GarageArea', 
+              'GarageCond', 'TotalBsmtSF', 'TotalRmsAbvGrd', 
+              'BsmtFinSF1')
+all <- all[,!(names(all) %in% dropVars)]
+```
+
+統計變數類別
+
+```{r modelPrepare2}
+numericVarNames <- which(sapply(all, is.numeric)) %>% names()
+numericVarNames <- numericVarNames[!(numericVarNames %in%
+                                       c('SalePrice','Id'))] 
+
+DFnumeric <- all[, names(all) %in% numericVarNames]
+
+DFfactors <- all[, !(names(all) %in% numericVarNames)]
+DFfactors <- DFfactors[, !names(DFfactors) %in% c('SalePrice','Id')] 
+cat('數值變數:', length(DFnumeric),'\n類別變數',length(DFfactors))
+
+```
+
+### 去掉偏態
+
+連續型特徵如果分佈明顯偏一邊，在預測上容易產生誤差。理論上去掉偏態讓資料趨近於常態會比較理想，試想今天如果一個特徵與目標特徵高度正相關，但是這個特徵卻極度右偏，那在歸納權重的時候該特徵越高不就越容易預測錯誤？
+
+以下程式碼將檢測每個數值特徵的偏態，大於0.5我就把它用log轉換(+1是避免0轉換不了)。
+
+```{r skew}
+for(i in 1:ncol(DFnumeric)){
+  if (abs(psych::skew(DFnumeric[,i]))>0.5){
+    DFnumeric[,i] <- log(DFnumeric[,i]+1)
+  }
+}
+```
+
+### 標準化
+
+連續型特徵會因為單位的不同而在模型權重上的歸納產生嚴重的影響，換句話說不同單位間的特徵能被放在一起比較？年齡20~26歲跟年薪200,000~260,000所計算出的權重會是等值的？  
+
+標準化還有另外幾個好處，因為標準化屬於特徵縮放的一種它能夠加快機器學習的收斂。另外經過標準化的特徵其分佈更容易變成常態分佈。
+
+這邊我利用caret套件的`preProcess`進行標準化。
+
+```{r scale}
+PreNum <- preProcess(DFnumeric, method=c("center", "scale")) #caret
+print(PreNum)
+
+DFnorm <- predict(PreNum, DFnumeric)
+dim(DFnorm)
+```
+
+### One Hot Enoding
+
+將類別數據轉換成數字表示使模型能夠進行計算，One Hot Enoding對於類別特徵，如果他有m個類別值則會形成m個二元特徵，並且這些特徵彼此會互斥不會有同時為1的情況發生，換句話說就是把單一類別特徵轉換成稀疏矩陣的概念。
+
+這邊我利用caret套件的`dummyVars`進行One Hot Encoding，並踢掉在train或test data裡分別小於等於10的類別變數，因為數量稀少對預測影響不大又能降維。
+
+```{r One Hot Encoding}
+PreFac <- dummyVars(" ~ .", data = DFfactors)
+DFdummies <- data.frame(predict(PreFac, DFfactors))
+dim(DFdummies)
+
+#踢掉在train或test data裡分別小於等於10的類別變數
+#test
+Tencol_test <- 
+  which(DFdummies[all$SalePrice %>% is.na %>% which,] %>% 
+          colSums() <= 10)
+colnames(DFdummies[Tencol_test])
+DFdummies <- DFdummies[,-Tencol_test] 
+
+#train
+Zerocol_train <- 
+  which(DFdummies[which(!(all$SalePrice %>% is.na)),] %>% 
+          colSums() <= 10)
+colnames(DFdummies[Zerocol_train])
+DFdummies <- DFdummies[,-Zerocol_train]
+modelData <- cbind(DFnorm, DFdummies) 
+
+```
 
 
+### 目標特徵的偏態
+
+前面EDA部分一開始就先討論過了目標特徵的右偏分佈，如果太過於右偏的話模型預測結果對於高房價的房子可能誤差會比較大，所以這部分除了透過畫出分佈圖之外，我還會運用計算偏態以及繪出QQ圖來協助我判斷。
+
+```{r SalePrice Skewness}
+ 
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
+  ggplot(aes(x = SalePrice )) + 
+  geom_histogram(fill="deeppink2",
+                 binwidth = 10000) +
+  scale_x_continuous(breaks= seq(0, 800000, by=100000),
+                     labels = comma)+
+  theme_bw() + #去掉背景色
+  theme(panel.grid=element_blank(),  #去掉網線
+        panel.border=element_blank(),#去掉邊線
+        axis.line=element_line(size=1,colour="black")) +
+  annotation_custom(tableGrob(summary(all$SalePrice) %>%
+                                "["(1:3) %>% as.matrix() %>% 
+                                t,rows = NULL), 
+                    xmin=400000, xmax=700000, 
+                    ymin=75, ymax=150)+
+  annotation_custom(tableGrob(summary(all$SalePrice) %>% 
+                                round() %>%
+                                "["(4:6) %>% 
+                                as.matrix() %>% 
+                                t,rows = NULL), 
+                    xmin=400000, xmax=700000, 
+                    ymin=75, ymax=100)
+
+psych::skew(all$SalePrice)
+qqnorm(all$SalePrice)
+qqline(all$SalePrice)
+
+```
+
+透過分佈圖形可以確認銷售價格為典型右偏，偏態係數高達1.877427，QQ圖也顯示低房價以及中高以上的房價偏離標準線。這情況必須修正回來，我是習慣使用log轉換，當然另外也有常用的Box-Cox轉換。
+
+
+```{r SalePrice Skewness2}
+ 
+all$SalePrice <- log(all$SalePrice) 
+psych::skew(all$SalePrice)
+qqnorm(all$SalePrice)
+qqline(all$SalePrice)
+
+```
+
+經過轉換後偏態係數更接近0，但是透過QQ圖發現房價頭尾的房子還是會些微偏離標準線。
+
+
+### 建模用與預測上傳用
+
+```{r train&test}
+train <- modelData[!is.na(all$SalePrice),]
+test <- modelData[is.na(all$SalePrice),]
+
+```
+
+
+# 建模
+
+## Lasso 迴歸
+
+```{r Lasso}
+set.seed(27042018)
+my_control <-trainControl(method="cv", number=5)
+lassoGrid <- expand.grid(alpha = 1,  #1 = lasso,0 = ridge
+                         lambda = seq(0.001,0.1,by = 0.0005)#懲罰項
+                         )
+
+lasso_mod <- train(x=train, 
+                   y=all$SalePrice[!is.na(all$SalePrice)], 
+                   method='glmnet', 
+                   trControl= my_control, 
+                   tuneGrid=lassoGrid) 
+lasso_mod$bestTune
+min(lasso_mod$results$RMSE)
+
+```
+
+使用Lasso迴歸本來是想達到特徵選擇來進行降維目的，使模型表現更好。但是呢我使用經過Lasso所挑出來的變數下去Train Xgboost的效果並沒有比較好，反而上傳的RMSE多出了0.05，所以後面的特徵還是選用原本的特徵。
+
+其實Xgboost經過特徵選擇後沒有表現比較好想想其實也挺正常的，畢竟人家演算法過程中也是有經過類似隨機森林那樣特徵抽選構建樹，又經過貪婪方式來搜尋最大可能。我想之後等哪天有空要將這個專案擴充做更大的演算法架構，例如多建幾個模型，多做一層stacking那Lasso的效果就會出來了吧！
+
+```{r Lasso1}
+LassoPred <- predict(lasso_mod, test)
+predictions_lasso <- exp(LassoPred) 
+head(predictions_lasso)
+```
+
+
+## Xgboost
+
+### 調參準備
+
+其實真要tune 超參數的話真的有一大堆要tune，但是受限於貧窮的設備限制，只好先tune幾個比較常見的．另外最近在研究AWS和AZURE等雲端計算的服務，等摸熟了之後設備升級我就能tune更多參數組合啦！
+
+下面的調參大約要跑一個多小時(i5-8300H 20G RAM)
+
+```{r xgboost}
+xgb_grid = expand.grid(
+  nrounds = 1000,
+  eta = c(0.05, 0.01),
+  max_depth = c(2, 3, 4, 5, 6),
+  gamma = 0,
+  colsample_bytree=1,
+  min_child_weight=c(1, 2, 3, 4 ,5),
+  subsample=1
+)
+
+# xgb_caret <- train(x=train[,varsSelected],
+#                   y=all$SalePrice[!is.na(all$SalePrice)], 
+#                   method='xgbTree', trControl= my_control, 
+#                   tuneGrid=xgb_grid) 
+# xgb_caret$bestTune
+
+default_param<-list(
+  objective = "reg:linear",
+  booster = "gbtree",
+  eta=0.05,
+  gamma=0,
+  max_depth=3, 
+  min_child_weight=2, 
+  subsample=1,
+  colsample_bytree=1
+)
+label_train <- all$SalePrice[!is.na(all$SalePrice)]
+# 將資料轉換成Xgb.DMatrix
+dtrain <- xgb.DMatrix(data = as.matrix(train), 
+                      label= label_train)
+dtest <- xgb.DMatrix(data = as.matrix(test))
+```
+
+### CV
+
+```{r xgboost2}
+set.seed(27042018)
+xgbcv <- xgb.cv(params = default_param,
+                data = dtrain,
+                nrounds = 1000,
+                nfold = 10, showsd = T,
+                stratified = T,
+                print_every_n = 40,
+                maximize = F)
+xgbcv$evaluation_log$test_rmse_mean %>% which.min() 
+xgbcv$evaluation_log$test_rmse_mean %>% min()
+```
+
+### 建模&預測
+
+```{r xgboost3}
+set.seed(27042018)
+xgb_mod <- xgb.train(data = dtrain, 
+                     params=default_param, 
+                     nrounds = 688)
+XGBpred <- predict(xgb_mod, dtest)
+predictions_XGB <- exp(XGBpred) 
+head(predictions_XGB)
+
+```
+
+### 特徵重要性
+
+```{r xgboost4}
+library(Ckmeans.1d.dp) #required for ggplot clustering
+mat <- xgb.importance (feature_names = colnames(train),
+                       model = xgb_mod)
+xgb.ggplot.importance(importance_matrix = mat[1:30], 
+                      rel_to_first = TRUE)
+
+```
+
+
+## 簡易Bagging
+
+因為Lasso在CV的測試集上比較低，我給他的預測權重比Xgboost大一點，比例會是Lasso 2 : Xgboost 1。最後輸出結果並上傳至Kaggle，結案！
+
+```{r bagging}
+sub_avg <- data.frame(Id = test_labels, 
+                      SalePrice = (predictions_XGB+2*predictions_lasso)/3)
+head(sub_avg)
+# write.csv(sub_avg, 
+#           file = 'output/housesale.csv',
+#           row.names = F)
+```
 

@@ -160,7 +160,7 @@ all$MiscFeature <- as.factor(all$MiscFeature)
 all %>% 
   filter(!(is.na(SalePrice))) %>% 
   ggplot(aes(x=MiscFeature, y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
   scale_y_continuous(breaks= seq(0, 800000, by=100000), labels = comma) +
   geom_label(stat = "count", aes(label = ..count.., y = ..count..))  +
   GGvisualize_theme() +
@@ -192,7 +192,7 @@ all$Alley %<>% as.factor()
 all %>% 
   filter(!(is.na(SalePrice))) %>% 
   ggplot(aes(x=Alley, y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2')+
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2')+
   scale_y_continuous(breaks= seq(0, 200000, by=50000), labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
   GGvisualize_theme() +
@@ -205,7 +205,7 @@ all %>%
 all$Fence[is.na(all$Fence)] <- 'None'
 all %>% filter(!(is.na(SalePrice))) %>%
   ggplot(aes(x=Fence, y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2')+
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2')+
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
   GGvisualize_theme() +
@@ -227,7 +227,7 @@ all$FireplaceQu <- as.integer(plyr::revalue(all$FireplaceQu,
                                               'Gd' = 4, 'Ex' = 5)))
 all %>% filter(!(is.na(SalePrice))) %>%
   ggplot(aes(x = FireplaceQu, y = SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2')+
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2')+
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
   GGvisualize_theme() +
@@ -241,7 +241,7 @@ all %>% filter(!(is.na(SalePrice))) %>%
 table(all$Fireplaces)
 all %>% filter(!(is.na(SalePrice))) %>%
   ggplot(aes(x = Fireplaces, y = SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2')+
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2')+
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
   GGvisualize_theme()
@@ -255,8 +255,8 @@ na_col[names(na_col) %>% str_detect("Lot") %>% which]
 
 all %>% 
   ggplot( aes(x=as.factor(Neighborhood), y=LotFrontage)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='black',width = 0.5) + 
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='black',width = 0.5) + 
   GGvisualize_theme()
 #利用dplyr結合ifelse進行向量式填補
 all %<>% group_by(Neighborhood) %>% 
@@ -271,7 +271,7 @@ all %<>% group_by(Neighborhood) %>%
 all %>% 
   filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=LotShape, y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
   GGvisualize_theme()
@@ -283,8 +283,8 @@ table(all$LotShape)
 #No NAs. 
 all %>% filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=LotConfig, y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
   GGvisualize_theme()
@@ -335,8 +335,8 @@ table(all$GarageType)
 all %>% 
   filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=GarageFinish, y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
   GGvisualize_theme()
@@ -353,8 +353,8 @@ all$GarageQual<-as.integer(plyr::revalue(all$GarageQual, c('None' = 0, 'Po' = 1,
 all %>% 
   filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=GarageQual, y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
   GGvisualize_theme()
@@ -377,8 +377,8 @@ all$GarageCond <-
 all %>% 
   filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=GarageCond, y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
   GGvisualize_theme()
@@ -410,8 +410,8 @@ all$BsmtQual <-
 all %>% 
   filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=BsmtQual, y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..))  + 
   GGvisualize_theme()
@@ -425,8 +425,8 @@ all$BsmtCond <-
 all %>%
   filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=BsmtCond, y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..))  + 
   GGvisualize_theme()
@@ -438,8 +438,8 @@ all$BsmtExposure <-
                              'Av'=3, 'Gd'=4)))
 all %>% filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=BsmtExposure, y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
   GGvisualize_theme()
@@ -451,8 +451,8 @@ all %>%
   ggplot( aes(x=factor(BsmtFinType1,levels =c('None', 'Unf', 'LwQ',
                                               'Rec', 'BLQ', 'ALQ','GLQ')),
               y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   xlab('BsmtFinType1') +
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
@@ -466,8 +466,8 @@ all %>%
   filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=BsmtFinType1,
               y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
   GGvisualize_theme()
@@ -481,8 +481,8 @@ all %>%
   ggplot( aes(x=factor(BsmtFinType2,levels =c('None', 'Unf', 'LwQ',
                                               'Rec', 'BLQ', 'ALQ','GLQ')),
               y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   xlab('BsmtFinType2') +
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
@@ -495,8 +495,8 @@ all %>%
   filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=BsmtFinType2,
               y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
   GGvisualize_theme()
@@ -545,13 +545,13 @@ all$MasVnrType[is.na(all$MasVnrType)] <- 'None'
 
 grid.arrange(
   ggplot(all, aes(x=MasVnrType, y=SalePrice)) +
-    geom_bar(stat='summary', fun.y = "median", fill='grey')+
+    stat_summary(geom ='bar', fun = "median", fill='grey')+
     scale_y_continuous(labels = comma) + 
     geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
     GGvisualize_theme() + 
     ggtitle("Median"),
   ggplot(all, aes(x=MasVnrType, y=SalePrice)) +
-    geom_bar(stat='summary', fun.y = "mean", fill='black')+
+    stat_summary(geom ='bar', fun = "mean", fill='black')+
     scale_y_continuous(labels = comma) + 
     geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
     GGvisualize_theme() + 
@@ -565,8 +565,8 @@ all$MasVnrType<-as.integer(plyr::revalue(all$MasVnrType,
 all %>% 
   filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=MasVnrType, y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
   GGvisualize_theme()
@@ -616,8 +616,8 @@ all$KitchenQual<-as.integer(plyr::revalue(all$KitchenQual, c('None' = 0, 'Po' = 
 all %>% 
   filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=KitchenQual, y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..))  + 
   GGvisualize_theme()
@@ -639,8 +639,8 @@ all %>% filter(!(is.na(SalePrice))) %>%
                                    'Mod','Min2',
                                    'Min1','Typ')), 
               y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   xlab('Functional') + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
@@ -671,8 +671,8 @@ all$ExterQual <-
 all %>% 
   filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=ExterQual, y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
   GGvisualize_theme()
@@ -688,8 +688,8 @@ all$ExterCond <-
 all %>% 
   filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=ExterCond, y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
   GGvisualize_theme()
@@ -732,8 +732,8 @@ all$HeatingQC <-
 all %>% 
   filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=HeatingQC, y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
   GGvisualize_theme()
@@ -772,8 +772,8 @@ all$LandSlope <-
 all %>% 
   filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=LandSlope, y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
   GGvisualize_theme()
@@ -786,8 +786,8 @@ all$LandSlope %<>% as.factor()
 all %>% 
   filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=as.factor(BldgType), y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
   GGvisualize_theme()
@@ -801,8 +801,8 @@ table(all$HouseStyle)
 all %>% 
   filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=HouseStyle, y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
   GGvisualize_theme()
@@ -839,8 +839,8 @@ all$PavedDrive<-as.integer(plyr::revalue(all$PavedDrive,
 all %>% 
   filter(!(is.na(SalePrice))) %>% 
   ggplot( aes(x=PavedDrive, y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2') +
-  geom_bar(stat='summary', fun.y = "sd", fill='deeppink3',width = 0.5) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
   scale_y_continuous(labels = comma) + 
   geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
   GGvisualize_theme()
@@ -850,7 +850,7 @@ all %>%
 all$MoSold <- as.factor(all$MoSold)
 grid.arrange(
   ggplot(all[!is.na(all$SalePrice),], aes(x=as.factor(YrSold), y=SalePrice)) +
-    geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2')+
+    stat_summary(geom ='bar', fun = "median", fill='dodgerblue2')+
     scale_y_continuous(breaks= seq(0, 800000, by=25000), labels = comma) +
     geom_label(stat = "count", aes(label = ..count.., y = ..count..)) +
     coord_cartesian(ylim = c(0, 200000)) +
@@ -858,7 +858,7 @@ grid.arrange(
     GGvisualize_theme()
   , #dashed line is median SalePrice
   ggplot(all[!is.na(all$SalePrice),], aes(x=MoSold, y=SalePrice)) +
-    geom_bar(stat='summary', fun.y = "median", fill='dodgerblue2')+
+    stat_summary(geom ='bar', fun = "median", fill='dodgerblue2')+
     scale_y_continuous(breaks= seq(0, 800000, by=25000), labels = comma) +
     geom_label(stat = "count", aes(label = ..count.., y = ..count..)) +
     coord_cartesian(ylim = c(0, 200000)) +
@@ -876,7 +876,7 @@ all$MSSubClass <- as.factor(all$MSSubClass)
 
 
 
-#視覺化一些變數----
+#探索資料分析&特徵組合----
 num_var2 <- which(sapply(all, is.numeric)) 
 factor_var <- which(sapply(all, is.factor))
 cat('總共有', length(num_var2), '連續變數, and',
@@ -917,7 +917,7 @@ corrplot.mixed(CorNumvarSort,
 par(oldpar)
 
 
-#藉由隨機森林探尋特徵的重要性
+#藉由隨機森林探尋特徵的重要性----
 set.seed(2018)
 quick_RF <- randomForest(x=all %>% 
                             filter(!(is.na(SalePrice))) %>% 
@@ -961,7 +961,7 @@ CairoPNG('output/importance.png',width = 1200, height = 800)
 print(important)
 dev.off()
 
-#和GrLivArea相關特徵
+#和GrLivArea相關特徵----
 grid.arrange(all %>% ggplot() +
                geom_density(aes(x = GrLivArea),
                             fill = 'pink',color = 'deeppink') + 
@@ -1011,11 +1011,31 @@ CorGrivArea <- cor(cbind(all[,c('SalePrice','GrLivArea','X1stFlrSF','X2ndFlrSF',
 CorGrivArea_Sort <- sort(CorGrivArea[,'SalePrice'], 
                          decreasing = TRUE) %>%
                       names()
+##GrLivArea幾乎和X1stFlrSF、X2ndFlrS相加一樣
 CorGrivArea[CorGrivArea_Sort, CorGrivArea_Sort] %>% 
   corrplot.mixed(tl.col="black", tl.pos = "lt")
-#GrLivArea幾乎和X1stFlrSF、X2ndFlrS相加一樣
+##相加X1stFlrSF、X2ndFlrS替代GrLivArea
+all$GrLivArea <- all$X1stFlrSF + all$X2ndFlrSF
+##新增TotalArea = GrLivArea+TotalBsmtSF
+all$TotalArea <- all$GrLivArea + all$TotalBsmtSF
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
+  ggplot(aes(x=TotalArea, y=SalePrice))+
+  geom_point(color='blue') + 
+  geom_smooth(method = "lm", se=FALSE, color="black", aes(group=1)) +
+  scale_y_continuous(breaks= seq(0, 800000, by=100000), labels = comma) +
+  geom_text_repel(aes(label = ifelse(all$TotalArea[!is.na(all$SalePrice)]>7500,
+                                     rownames(all), ''))) + 
+  GGvisualize_theme()
+#0.782
+cor(all$SalePrice, all$TotalArea, use= "pairwise.complete.obs")
+#0.832
+cor(all$SalePrice[-c(524, 1299)], all$TotalArea[-c(524, 1299)], 
+    use= "pairwise.complete.obs")
 
-#Neighborhood
+
+#Neighborhood-----
+##視覺化
 grid.arrange(all %>% ggplot(aes(x=Neighborhood, y=SalePrice)) +
                geom_bar(stat='summary',
                         fun.y = "median", 
@@ -1042,129 +1062,10 @@ grid.arrange(all %>% ggplot(aes(x=Neighborhood, y=SalePrice)) +
                GGvisualize_theme() + 
                theme(axis.text.x = element_text(angle = 45, hjust = 1)))
 
-#Overall Quality, and other Quality variables
-
-grid.arrange(ggplot(data=all, aes(x=as.factor(OverallQual))) +
-               geom_histogram(stat='count'),
-             ggplot(data=all, aes(x=as.factor(ExterQual))) +
-               geom_histogram(stat='count'),
-             ggplot(data=all, aes(x=as.factor(BsmtQual))) +
-               geom_histogram(stat='count'),
-             ggplot(data=all, aes(x=as.factor(KitchenQual))) +
-               geom_histogram(stat='count'),
-             ggplot(data=all, aes(x=as.factor(GarageQual))) +
-               geom_histogram(stat='count'),
-             ggplot(data=all, aes(x=as.factor(FireplaceQu))) +
-               geom_histogram(stat='count'),
-             ggplot(data=all, aes(x=as.factor(PoolQC))) +
-               geom_histogram(stat='count'),
-             layout_matrix = matrix(c(1,2,8,3,4,8,5,6,7),3,3,byrow=TRUE)
-  
-)
-
-#The second most important categorical variable; MSSubClass
-
-grid.arrange(ggplot(all[!is.na(all$SalePrice),], aes(x=MSSubClass, y=SalePrice)) +
-               geom_bar(stat='summary', fun.y = "median", fill='blue') +
-               theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-               scale_y_continuous(breaks= seq(0, 800000, by=50000), labels = comma) +
-               geom_label(stat = "count", aes(label = ..count.., y = ..count..), size=3) +
-               geom_hline(yintercept=163000, linetype="dashed", color = "red") ,#dashed line is median SalePrice
-             ggplot(data=all, aes(x=MSSubClass)) +
-               geom_histogram(stat='count')+
-               geom_label(stat = "count", aes(label = ..count.., y = ..count..), size=3) +
-               theme(axis.text.x = element_text(angle = 45, hjust = 1))
-  
-)
-
-#Garage variables
-#correct error
-all$GarageYrBlt[2593] <- 2007 #keying error GarageYrBlt=2207, YearBuilt=2006, YearRemodAdd=2007
-grid.arrange(ggplot(data=all[all$GarageCars !=0,], aes(x=GarageYrBlt)) +
-               geom_histogram(),
-             ggplot(data=all, aes(x=as.factor(GarageCars))) +
-               geom_histogram(stat='count'),
-             ggplot(data= all, aes(x=GarageArea)) +
-               geom_density(),
-             ggplot(data=all, aes(x=as.factor(GarageCond))) +
-               geom_histogram(stat='count'),
-             ggplot(data=all, aes(x=GarageType)) +
-               geom_histogram(stat='count'),
-             ggplot(data=all, aes(x=as.factor(GarageQual))) +
-               geom_histogram(stat='count'),
-             ggplot(data=all, aes(x=as.factor(GarageFinish))) +
-               geom_histogram(stat='count'),
-             layout_matrix =matrix(c(1,5,5,2,3,8,6,4,7),3,3,byrow=TRUE)
-  
-)
-
-#Basement variables
-grid.arrange(ggplot(data=all, aes(x=BsmtFinSF1)) +
-               geom_histogram() + labs(x='Type 1 finished square feet'),
-             ggplot(data=all, aes(x=BsmtFinSF2)) +
-               geom_histogram()+ labs(x='Type 2 finished square feet'),
-             ggplot(data=all, aes(x=BsmtUnfSF)) +
-               geom_histogram()+ labs(x='Unfinished square feet'),
-             ggplot(data=all, aes(x=as.factor(BsmtFinType1))) +
-               geom_histogram(stat='count')+ labs(x='Rating of Type 1 finished area'),
-             ggplot(data=all, aes(x=as.factor(BsmtFinType2))) +
-               geom_histogram(stat='count')+ labs(x='Rating of Type 2 finished area'),
-             ggplot(data=all, aes(x=as.factor(BsmtQual))) +
-               geom_histogram(stat='count')+ labs(x='Height of the basement'),
-             ggplot(data=all, aes(x=as.factor(BsmtCond))) +
-               geom_histogram(stat='count')+ labs(x='Rating of general condition'),
-             ggplot(data=all, aes(x=as.factor(BsmtExposure))) +
-               geom_histogram(stat='count')+ labs(x='Walkout or garden level walls'),
-             layout_matrix = matrix(c(1,2,3,4,5,9,6,7,8),3,3,byrow=TRUE)
-  
-)
-
-#Feature engineering----
-#total number of bathrooms
-
-all$TotBathrooms <- all$FullBath + (all$HalfBath*0.5) + all$BsmtFullBath + (all$BsmtHalfBath*0.5)
-
-grid.arrange(ggplot(data=all[!is.na(all$SalePrice),], aes(x=as.factor(TotBathrooms), y=SalePrice))+
-               geom_point(col='blue') + geom_smooth(method = "lm", se=FALSE, color="black", aes(group=1)) +
-               scale_y_continuous(breaks= seq(0, 800000, by=100000), labels = comma),
-             ggplot(data=all, aes(x=as.factor(TotBathrooms))) +
-               geom_histogram(stat='count'))
-
-cor(all$SalePrice[!is.na(all$SalePrice)], all$TotBathrooms[!is.na(all$SalePrice)])
-
-#Adding ‘House Age’, ‘Remodeled (Yes/No)’, and IsNew variables
-all$Remod <- ifelse(all$YearBuilt==all$YearRemodAdd, 0, 1) #0=No Remodeling, 1=Remodeling
-all$Age <- as.numeric(all$YrSold)-all$YearRemodAdd
-ggplot(data=all[!is.na(all$SalePrice),], aes(x=Age, y=SalePrice))+
-  geom_point(col='blue') + geom_smooth(method = "lm", se=FALSE, color="black", aes(group=1)) +
-  scale_y_continuous(breaks= seq(0, 800000, by=100000), labels = comma)
-
-#a negative correlation with Age (old house are worth less).
-cor(all$SalePrice[!is.na(all$SalePrice)], all$Age[!is.na(all$SalePrice)])
-
-ggplot(all[!is.na(all$SalePrice),], aes(x=as.factor(Remod), y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='blue') +
-  geom_label(stat = "count", aes(label = ..count.., y = ..count..), size=6) +
-  scale_y_continuous(breaks= seq(0, 800000, by=50000), labels = comma) +
-  theme_grey(base_size = 18) +
-  geom_hline(yintercept=163000, linetype="dashed") #dashed line is median SalePrice
-
-all$IsNew <- ifelse(all$YrSold==all$YearBuilt, 1, 0)
-table(all$IsNew)
-
-ggplot(all[!is.na(all$SalePrice),], aes(x=as.factor(IsNew), y=SalePrice)) +
-  geom_bar(stat='summary', fun.y = "median", fill='blue') +
-  geom_label(stat = "count", aes(label = ..count.., y = ..count..), size=6) +
-  scale_y_continuous(breaks= seq(0, 800000, by=50000), labels = comma) +
-  theme_grey(base_size = 18) +
-  geom_hline(yintercept=163000, linetype="dashed") #dashed line is median SalePrice
-
-all$YrSold <- as.factor(all$YrSold) #the numeric version is now not needed anymore
-
-#Binning Neighborhood
+##觀察排序後Neighborhood
 grid.arrange(ggplot(all[!is.na(all$SalePrice),], 
                     aes(x=reorder(Neighborhood, SalePrice, FUN=median), y=SalePrice)) +
-               geom_bar(stat='summary', fun.y = "median", fill='blue') + 
+               stat_summary(geom ='bar', fun = "median", fill='blue') + 
                labs(x='Neighborhood', y='Median SalePrice') +
                scale_y_continuous(breaks= seq(0, 800000, by=50000), labels = comma) +
                geom_label(stat = "count", 
@@ -1176,7 +1077,7 @@ grid.arrange(ggplot(all[!is.na(all$SalePrice),],
                theme(axis.text.x = element_text(angle = 45, hjust = 1)) , 
              ggplot(all[!is.na(all$SalePrice),], 
                     aes(x=reorder(Neighborhood, SalePrice, FUN=mean), y=SalePrice)) +
-               geom_bar(stat='summary', fun.y = "mean", fill='blue') +
+               stat_summary(geom ='bar', fun = "mean", fill='blue') +
                labs(x='Neighborhood', y="Mean SalePrice") +
                scale_y_continuous(breaks= seq(0, 800000, by=50000), labels = comma) +
                geom_label(stat = "count", 
@@ -1187,53 +1088,273 @@ grid.arrange(ggplot(all[!is.na(all$SalePrice),],
                theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ) 
 
+##重新編碼
+all$NeighCluster[all$Neighborhood %in% c('StoneBr', 'NridgHt', 'NoRidge')] <- 2
+all$NeighCluster[!all$Neighborhood %in% c('MeadowV', 'IDOTRR', 'BrDale', 'StoneBr', 'NridgHt', 'NoRidge')] <- 1 #介於貧窮以及富有的街區
+all$NeighCluster[all$Neighborhood %in% c('MeadowV', 'IDOTRR', 'BrDale')] <- 0
+all %>% 
+  filter(!(is.na(SalePrice))) %>% 
+  ggplot( aes(x=NeighCluster, y=SalePrice)) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='deeppink3',width = 0.5) +
+  scale_y_continuous(labels = comma) + 
+  geom_label(stat = "count",aes(label = ..count..,y = ..count..)) + 
+  GGvisualize_theme()
+##暫時踢掉Neighborhood
+all$Neighborhood <- NULL
 
-all$NeighRich[all$Neighborhood %in% c('StoneBr', 'NridgHt', 'NoRidge')] <- 2
-all$NeighRich[!all$Neighborhood %in% c('MeadowV', 'IDOTRR', 'BrDale', 'StoneBr', 'NridgHt', 'NoRidge')] <- 1 #介於貧窮以及富有的街區
-all$NeighRich[all$Neighborhood %in% c('MeadowV', 'IDOTRR', 'BrDale')] <- 0
-table(all$NeighRich)
 
-#Total Square Feet
+#MSSubClass----
 
-all$TotalSqFeet <- all$GrLivArea + all$TotalBsmtSF
+grid.arrange(ggplot(all[!is.na(all$SalePrice),], aes(x=MSSubClass, y=SalePrice)) +
+               stat_summary(geom ='bar', fun = "median", fill='blue') +
+               theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+               scale_y_continuous(breaks= seq(0, 800000, by=50000), labels = comma) +
+               geom_label(stat = "count", aes(label = ..count.., y = ..count..), size=3) +
+               geom_hline(yintercept=163000, linetype="dashed", color = "red") +
+               GGvisualize_theme() ,#dashed line is median SalePrice
+             ggplot(data=all, aes(x=MSSubClass)) +
+               geom_histogram(stat='count')+
+               geom_label(stat = "count", aes(label = ..count.., y = ..count..), size=3) +
+               theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+               GGvisualize_theme() 
+  
+)
 
-ggplot(data=all[!is.na(all$SalePrice),], aes(x=TotalSqFeet, y=SalePrice))+
-  geom_point(col='blue') + geom_smooth(method = "lm", se=FALSE, color="black") +
-  scale_y_continuous(breaks= seq(0, 800000, by=100000), labels = comma) +
-  geom_text_repel(aes(label = ifelse(all$GrLivArea[!is.na(all$SalePrice)]>4500, rownames(all), '')))
+# Garage variables----
+names(all)[names(all) %>% str_detect("Garage") %>% which]
+all$GarageYrBlt[2593] <- 2007 #keying error GarageYrBlt=2207, YearBuilt=2006, YearRemodAdd=2007
+grid.arrange(ggplot(data=all[all$GarageCars !=0,], aes(x=GarageYrBlt)) +
+               geom_histogram() +
+               GGvisualize_theme() ,
+             ggplot(data=all, aes(x=as.factor(GarageCars))) +
+               geom_histogram(stat='count') +
+               GGvisualize_theme() ,
+             ggplot(data= all, aes(x=GarageArea)) +
+               geom_histogram() +
+               GGvisualize_theme() ,
+             ggplot(data=all, aes(x=as.factor(GarageCond))) +
+               geom_histogram(stat='count') +
+               GGvisualize_theme() ,
+             ggplot(data=all, aes(x=GarageType)) +
+               geom_histogram(stat='count') +
+               GGvisualize_theme() ,
+             ggplot(data=all, aes(x=as.factor(GarageQual))) +
+               geom_histogram(stat='count') +
+               GGvisualize_theme() ,
+             ggplot(data=all, aes(x=as.factor(GarageFinish))) +
+               geom_histogram(stat='count') +
+               GGvisualize_theme() ,
+             layout_matrix =matrix(c(1,5,5,2,3,8,6,4,7),3,3,byrow=TRUE)
+             
+)
+
+#量化廁所數量----
+
+all$TotBathrooms <- all$FullBath + (all$HalfBath*0.5) + all$BsmtFullBath + (all$BsmtHalfBath*0.5)
+
+grid.arrange(
+  ggplot(data=all[!is.na(all$SalePrice),], 
+         aes(x=as.factor(TotBathrooms), 
+             y=SalePrice))+
+    geom_point(col='blue') + 
+    geom_smooth(method = "lm", se=FALSE, color="black", aes(group=1)) +
+    labs(y = 'SalePrice(千元)')+
+    scale_y_continuous(breaks= seq(0, 800000, by=100000), 
+                       labels = function(d){
+                         d/1000
+                       }) +
+    GGvisualize_theme(),
+  ggplot(data=all, aes(x=as.factor(TotBathrooms))) +
+    geom_histogram(stat='count',width = 0.5) +
+    GGvisualize_theme())
+
+cor(all$SalePrice[!is.na(all$SalePrice)], all$TotBathrooms[!is.na(all$SalePrice)])
+
+#屋齡----
+all$Age <- as.numeric(as.character(all$YrSold))-all$YearRemodAdd
+all$Age2 <- as.numeric(as.character(all$YrSold))-all$YearBuilt
+
+library(ggpmisc)
+
+grid.arrange(
+  all[!is.na(all$SalePrice),] %>%
+    ggplot(aes(x=Age, y=SalePrice%>% log))+
+    geom_point(col='blue') + 
+    geom_smooth(method = "lm", se=T,level = 0.95, color="black") +
+    stat_poly_eq(formula =  y~x,
+                 aes(label = paste(..rr.label..)), 
+                 parse = TRUE)+
+    scale_y_continuous(breaks= seq(0, 800000, by=100000), labels = comma) +
+    GGvisualize_theme(),
+  all[!is.na(all$SalePrice),] %>%
+    ggplot(aes(x=Age2, y=SalePrice %>% log()))+
+    geom_point(col='blue') + 
+    geom_smooth(method = "lm", se=T, color="black", aes(group=1)) +
+    stat_poly_eq(formula =  y~x,
+                 aes(label = paste(..rr.label..)), 
+                 parse = TRUE)+
+    scale_y_continuous(breaks= seq(0, 800000, by=100000), labels = comma) +
+    GGvisualize_theme()
+  
+)
+
+cor(all$SalePrice[!is.na(all$SalePrice)], all$Age[!is.na(all$SalePrice)])
+cor(all$SalePrice[!is.na(all$SalePrice)], all$Age2[!is.na(all$SalePrice)])
+
+all$Age2 <- NULL
+all$Age <- as.numeric(as.character(all$YrSold))-all$YearRemodAdd
+
+#是否改建----
+all$Remod <- ifelse(all$YearBuilt==all$YearRemodAdd, 0, 1) 
+
+#視覺化
+ggplot(all[!is.na(all$SalePrice),], aes(x=as.factor(Remod), y=SalePrice)) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='black',width = 0.5) +
+  geom_label(stat = "count", aes(label = ..count.., y = ..count..), size=6) +
+  scale_y_continuous(breaks= seq(0, 800000, by=50000), labels = comma) +
+  theme_grey(base_size = 18) +
+  geom_hline(yintercept=163000, linetype="dashed") +
+  GGvisualize_theme()
+#改建x地區
+ggplot(all[!is.na(all$SalePrice),], aes(x=as.factor(Remod), y=SalePrice)) +
+  stat_summary(geom ='bar', fun = "median", fill='dodgerblue2') +
+  stat_summary(geom ='bar', fun = "sd", fill='black',width = 0.5) +
+  geom_label(stat = "count", aes(label = ..count.., y = ..count..), size=6) +
+  scale_y_continuous(breaks= seq(0, 800000, by=50000), labels = comma) +
+  theme_grey(base_size = 18) +
+  facet_wrap(NeighCluster~.)+
+  geom_hline(yintercept=163000, linetype="dashed") +
+  GGvisualize_theme()
+
+#無母數中位數檢定
+
+kruskal.test(data = all[!is.na(all$SalePrice),],SalePrice ~ Remod)
 
 
-cor(all$SalePrice, all$TotalSqFeet, use= "pairwise.complete.obs")
-# taking out two outliers, the correlation increases by 5%
-cor(all$SalePrice[-c(524, 1299)], all$TotalSqFeet[-c(524, 1299)], use= "pairwise.complete.obs")
+# 是否新屋-----
 
-#Consolidating Porch variables
-all$TotalPorchSF <- all$OpenPorchSF + all$EnclosedPorch + all$X3SsnPorch + all$ScreenPorch
+SalePriceDiff <- data.frame()
+for (i in 0:5) {
+  all$IsNew <- ifelse(as.numeric(as.character(all$YrSold)) - all$YearBuilt <= i, 1, 0)
+  medianDiff <- 
+    median(all[all$IsNew == 1 & !is.na(all$SalePrice),'SalePrice']) -
+    median(all[all$IsNew == 0 & !is.na(all$SalePrice),'SalePrice'])
+  lm_isnew <- lm(log(all$SalePrice)~all$IsNew) %>% summary
+  SalePriceDiff <- rbind(SalePriceDiff, 
+                         data.frame(
+                           year = i,
+                           medianDiff = medianDiff,
+                           sd_0 =  sd(all[all$IsNew == 0 & !is.na(all$SalePrice),'SalePrice']),
+                           sd_1 =  sd(all[all$IsNew == 1 & !is.na(all$SalePrice),'SalePrice']),
+                           IsNewNum = table(all$IsNew)[2],
+                           IsNewNum_train = table(all[!is.na(all$SalePrice),'IsNew'])[2]
+                           )
+                         )
+}
+SalePriceDiff 
 
-cor(all$SalePrice, all$TotalPorchSF, use= "pairwise.complete.obs")
-ggplot(data=all[!is.na(all$SalePrice),], aes(x=TotalPorchSF, y=SalePrice))+
-  geom_point(col='blue') + geom_smooth(method = "lm", se=FALSE, color="black", aes(group=1)) +
-  scale_y_continuous(breaks= seq(0, 800000, by=100000), labels = comma)
+#簡單迴歸比較
+SalePriceDiff <- data.frame()
+for (i in 0:5) {
+  all$IsNew <- ifelse(as.numeric(as.character(all$YrSold)) - all$YearBuilt <= i, 1, 0)
+  medianDiff <- 
+    median(all[all$IsNew == 1 & !is.na(all$SalePrice),'SalePrice']) -
+    median(all[all$IsNew == 0 & !is.na(all$SalePrice),'SalePrice'])
+  lm_isnew <- lm(log(all$SalePrice)~all$IsNew) %>% summary
+  SalePriceDiff <- rbind(SalePriceDiff, 
+                         data.frame(
+                           year = i,
+                           medianDiff = medianDiff,
+                           IsNewNum = table(all$IsNew)[2],
+                           IsNewNum_train = table(all[!is.na(all$SalePrice),'IsNew'])[2],
+                           rmse = lm_isnew$sigma,
+                           rSquare = lm_isnew$adj.r.squared
+                         )
+  )
+}
+SalePriceDiff 
 
-#preparing data for modeling----
-#Dropping highly correlated variables
-dropVars <- c('YearRemodAdd', 'GarageYrBlt', 'GarageArea', 'GarageCond', 'TotalBsmtSF', 'TotalRmsAbvGrd', 'BsmtFinSF1')
 
+
+all$IsNew <- ifelse(as.numeric(as.character(all$YrSold)) - all$YearBuilt <= 3, 1, 0)
+table(all$IsNew)
+ggplot(all[!is.na(all$SalePrice),], aes(x=as.factor(IsNew), y=SalePrice)) +
+  stat_summary(geom ='bar', fun = "median", fill='steelblue') +
+  stat_summary(geom ='bar', fun = "sd", fill='black',width = 0.5) +
+  geom_label(stat = "count", aes(label = ..count.., y = ..count..), size=6) +
+  scale_y_continuous(breaks= seq(0, 800000, by=50000), labels = comma) +
+  theme_grey(base_size = 18) +
+  geom_hline(yintercept=163000, linetype="dashed") +
+  GGvisualize_theme()
+
+#最大偏好屋齡----
+SalePriceDiff <- data.frame()
+for (i in 0:60) {
+  all$IsNewMax <- ifelse(as.numeric(as.character(all$YrSold)) - all$YearBuilt <= i, 1, 0)
+  medianDiff <- 
+    median(all[all$IsNewMax == 1 & !is.na(all$SalePrice),'SalePrice']) -
+    median(all[all$IsNewMax == 0 & !is.na(all$SalePrice),'SalePrice'])
+  lm_isnew <- lm(log(all$SalePrice)~all$IsNewMax) %>% summary
+  SalePriceDiff <- rbind(SalePriceDiff, 
+                         data.frame(
+                           year = i,
+                           medianDiff = medianDiff,
+                           IsNewNum = table(all$IsNewMax)[2],
+                           IsNewNum_train = table(all[!is.na(all$SalePrice),'IsNewMax'])[2],
+                           rmse = lm_isnew$sigma,
+                           rSquare = lm_isnew$adj.r.squared
+                         )
+  )
+}
+grid.arrange(
+  SalePriceDiff %>%  
+    ggplot(aes(x = year,y = rSquare,group = 1)) + 
+    geom_point() +
+    geom_text(aes(label = round(rSquare,3)),
+              color = ifelse(max(SalePriceDiff$rSquare) == SalePriceDiff$rSquare,
+                             'red','transparent'),
+              vjust = 1.5,
+              size = 5) + 
+    scale_x_continuous(
+      breaks = c(seq(0,60,10),
+                 SalePriceDiff[which(SalePriceDiff$rSquare == max(SalePriceDiff$rSquare)),
+                               'year'])) +
+    geom_line() + 
+    GGvisualize_theme(),
+  SalePriceDiff %>%  
+    ggplot(aes(x = year,y = medianDiff)) + 
+    geom_bar(stat = 'identity') +
+    geom_text(aes(label = medianDiff),
+              color = ifelse(max(SalePriceDiff$rSquare) == SalePriceDiff$rSquare,
+                             'red','transparent'),
+              vjust = -1,
+              size = 5) + 
+    scale_y_continuous(labels = function(d){
+      d/10000
+    })+
+    scale_x_continuous(
+      breaks = c(seq(0,60,10),
+                 SalePriceDiff[which(SalePriceDiff$rSquare == max(SalePriceDiff$rSquare)),
+                               'year'])) +
+    GGvisualize_theme()
+  
+)
+
+
+
+#模型準備----
+#踢掉高相關性的變數
+dropVars <- c('YearRemodAdd', 'GarageYrBlt', 'GarageArea', 
+              'GarageCond', 'TotalBsmtSF', 'TotalRmsAbvGrd', 
+              'BsmtFinSF1')
 all <- all[,!(names(all) %in% dropVars)]
 
-corrplot.mixed(cor_numVar, tl.col="black", tl.pos = "lt", tl.cex = 0.7,cl.cex = .7, number.cex=.7)
-CairoPNG('cor3.png')
-corrplot.mixed(cor_numVar, tl.col="black", tl.pos = "lt", tl.cex = 0.7,cl.cex = .7, number.cex=.7)
-dev.off()
-
-
-#Removing outliers
-all <- all[-c(524, 1299),]
-#PreProcessing predictor variables
-numericVarNames <- which(sapply(all, is.numeric))
-numericVarNames <- names(numericVarNames)
-numericVarNames <- numericVarNames[!(numericVarNames %in% c('MSSubClass', 'MoSold', 'YrSold', 'SalePrice', 'OverallQual', 'OverallCond'))] #numericVarNames was created before having done anything
-numericVarNames <- c(numericVarNames,'Age', 'TotalPorchSF', 'TotBathrooms', 'TotalSqFeet')
+#數值變數
+numericVarNames <- which(sapply(all, is.numeric)) %>% names()
+numericVarNames <- numericVarNames[!(numericVarNames %in%
+                                       c('SalePrice','Id'))] 
 
 #about c() & append()
 #https://stackoverflow.com/questions/16144683/difference-between-c-and-append
@@ -1241,117 +1362,155 @@ numericVarNames <- c(numericVarNames,'Age', 'TotalPorchSF', 'TotBathrooms', 'Tot
 DFnumeric <- all[, names(all) %in% numericVarNames]
 
 DFfactors <- all[, !(names(all) %in% numericVarNames)]
-DFfactors <- DFfactors[, names(DFfactors) != 'SalePrice'] 
+DFfactors <- DFfactors[, !names(DFfactors) %in% c('SalePrice','Id')] 
 
 cat('There are', length(DFnumeric), 'numeric variables, and', length(DFfactors), 'factor variables')
 
-#Skewness and normalizing of the numeric predictors
-# log+1, to avoid division by zero issues
+#偏態
 for(i in 1:ncol(DFnumeric)){
-  if (abs(skew(DFnumeric[,i]))>0.8){
-    DFnumeric[,i] <- log(DFnumeric[,i] +1)
+  if (abs(psych::skew(DFnumeric[,i]))>0.5){
+    DFnumeric[,i] <- log(DFnumeric[,i]+1)
   }
 }
 
+#標準化
 PreNum <- preProcess(DFnumeric, method=c("center", "scale")) #caret
 print(PreNum)
-
 DFnorm <- predict(PreNum, DFnumeric)
 dim(DFnorm)
 
-#One hot encoding the categorical variables
-DFdummies <- as.data.frame(model.matrix(~.-1, DFfactors))
+#One hot encoding
+#r 內建
+# DFdummies <- as.data.frame(model.matrix(~.-1, DFfactors,
+#                                         contrasts.arg = lapply(DFfactors, 
+#                                                                contrasts, 
+#                                                                contrasts=FALSE)))
+# dim(DFdummies)
+#caret 版本
+PreFac <- dummyVars(" ~ .", data = DFfactors)
+DFdummies <- data.frame(predict(PreFac, DFfactors))
 dim(DFdummies)
 
-#Removing levels with few or no observations in train or test
-ZerocolTest <- which(DFdummies[all$SalePrice %>% is.na %>% which,] %>% colSums() == 0)
-colnames(DFdummies[ZerocolTest])
-DFdummies <- DFdummies[,-ZerocolTest] #removing predictors
+#踢掉在train或test data裡分別小於等於10的類別變數
+#test
+Tencol_test <- 
+  which(DFdummies[all$SalePrice %>% is.na %>% which,] %>% 
+          colSums() <= 10)
+colnames(DFdummies[Tencol_test])
+DFdummies <- DFdummies[,-Tencol_test] 
 
-ZerocolTrain <- which(DFdummies[which(!(all$SalePrice %>% is.na)),] %>% colSums() == 0)
-colnames(DFdummies[ZerocolTrain])
+#train
+Zerocol_train <- 
+  which(DFdummies[which(!(all$SalePrice %>% is.na)),] %>% 
+          colSums() <= 10)
+colnames(DFdummies[Zerocol_train])
+DFdummies <- DFdummies[,-Zerocol_train]
 
-DFdummies <- DFdummies[,-ZerocolTrain] #removing predictor
-# taking out variables with less than 10 ‘ones’ in the train set.
-fewOnes <- which(DFdummies[which(!(all$SalePrice %>% is.na)),] %>% colSums() <10)
-colnames(DFdummies[fewOnes])
-DFdummies <- DFdummies[,-fewOnes] #removing predictors
-dim(DFdummies)
-combined <- cbind(DFnorm, DFdummies) #combining all (now numeric) predictors into one dataframe 
-
-# Dealing with skewness of response variable
-skew(all$SalePrice)
+modelData <- cbind(DFnorm, DFdummies) 
+#目標特徵的偏態
+psych::skew(all$SalePrice)
 qqnorm(all$SalePrice)
 qqline(all$SalePrice)
 
-all$SalePrice <- log(all$SalePrice) #default is the natural logarithm, "+1" is not necessary as there are no 0's
-skew(all$SalePrice)
+all$SalePrice <- log(all$SalePrice) 
+psych::skew(all$SalePrice)
 qqnorm(all$SalePrice)
 qqline(all$SalePrice)
-#做做看有處理價格跟沒處理價格的準確率
-#Composing train and test sets
-train1 <- combined[!is.na(all$SalePrice),]
-test1 <- combined[is.na(all$SalePrice),]
+#將資料分成建模用與預測上傳用
+train <- modelData[!is.na(all$SalePrice),]
+test <- modelData[is.na(all$SalePrice),]
 
-#Modeling
+#建模-----
 # Lasso regression model
 set.seed(27042018)
 my_control <-trainControl(method="cv", number=5)
-lassoGrid <- expand.grid(alpha = 1, lambda = seq(0.001,0.1,by = 0.0005))
+lassoGrid <- expand.grid(alpha = 1, #1 = lasso,0 = ridge
+                         lambda = seq(0.001,0.1,by = 0.0005)
+                         #懲罰項 越小
+                         )
 
-lasso_mod <- train(x=train1, y=all$SalePrice[!is.na(all$SalePrice)], method='glmnet', trControl= my_control, tuneGrid=lassoGrid) 
+lasso_mod <- train(x=train, 
+                   y=all$SalePrice[!is.na(all$SalePrice)], 
+                   method='glmnet', 
+                   trControl= my_control, 
+                   tuneGrid=lassoGrid) 
 lasso_mod$bestTune
-min(lasso_mod$results$RMSE)
+min(lasso_mod$results$RMSE)#20:0.1134226 10:0.1135765
 
 lassoVarImp <- varImp(lasso_mod,scale=F)
 lassoImportance <- lassoVarImp$importance
 
-varsSelected <- length(which(lassoImportance$Overall!=0))
-varsNotSelected <- length(which(lassoImportance$Overall==0))
+LassoPred <- predict(lasso_mod, test)
 
-cat('Lasso uses', varsSelected, 'variables in its model, and did not select', varsNotSelected, 'variables.')
-LassoPred <- predict(lasso_mod, test1)
-predictions_lasso <- exp(LassoPred) #need to reverse the log to the real values
+# 驗證直接用caret tune lasso的模型 predict 與
+# tune 出來最佳參數並直接用glmnet建模預測看差別
+# 答案: 沒差
+# library(glmnet)
+# 
+# lasso = glmnet(x = as.matrix(train), 
+#                y = all$SalePrice[!is.na(all$SalePrice)], 
+#                alpha = 1, 
+#                family = "gaussian")
+# LassoPred2 <- predict(lasso, s = 0.0025,newx = as.matrix(test))
+
+predictions_lasso <- exp(LassoPred) 
 head(predictions_lasso)
+
 #XGBoost model
 xgb_grid = expand.grid(
   nrounds = 1000,
-  eta = c(0.1, 0.05, 0.01),
+  eta = c(0.05, 0.01),
   max_depth = c(2, 3, 4, 5, 6),
   gamma = 0,
   colsample_bytree=1,
   min_child_weight=c(1, 2, 3, 4 ,5),
   subsample=1
 )
+
+
 #expand.grid 根據給定的值產生全部的資料組合
- xgb_caret <- train(x=train1,
-                    y=all$SalePrice[!is.na(all$SalePrice)], 
-                    method='xgbTree', trControl= my_control, 
-                    tuneGrid=xgb_grid) 
+xgb_caret <- train(x=train[,varsSelected],
+                  y=all$SalePrice[!is.na(all$SalePrice)], 
+                  method='xgbTree', trControl= my_control, 
+                  tuneGrid=xgb_grid) 
 xgb_caret$bestTune
 #0428
 #nrounds max_depth  eta gamma colsample_bytree min_child_weight subsample
 #   1000         3 0.05     0                1                5         1
 
+#20200628 20以內
+# nrounds max_depth  eta gamma colsample_bytree min_child_weight  subsample
+#     1000        2 0.05     0                1                5          1
 
+#20200628 10以內
+# nrounds max_depth  eta gamma colsample_bytree  min_child_weight subsample
+#   1000         3  0.05     0                1                2         1
+# 
+                
+#2020701 lasso selected 10以內
+
+# nrounds max_depth  eta gamma colsample_bytree min_child_weight subsample
+#   1000         3 0.05     0                1               4         1
+
+   
 
 label_train <- all$SalePrice[!is.na(all$SalePrice)]
 
-# put our testing & training data into two seperates Dmatrixs objects
-dtrain <- xgb.DMatrix(data = as.matrix(train1), label= label_train)
-dtest <- xgb.DMatrix(data = as.matrix(test1))
-
+# 將資料轉換成Xgb.DMatrix
 default_param<-list(
   objective = "reg:linear",
   booster = "gbtree",
   eta=0.05, #default = 0.3
   gamma=0,
-  max_depth=3, #default=6
-  min_child_weight=5, #default=1
+  max_depth=3,  #原本2
+  min_child_weight=4, 
   subsample=1,
   colsample_bytree=1
 )
 
+dtrain <- xgb.DMatrix(data = as.matrix(train), 
+                      label= label_train)
+dtest <- xgb.DMatrix(data = as.matrix(test))
 
 set.seed(27042018)
 xgbcv <- xgb.cv(params = default_param,
@@ -1361,24 +1520,23 @@ xgbcv <- xgb.cv(params = default_param,
                 stratified = T,
                 print_every_n = 40,
                 maximize = F)
-xgbcv$evaluation_log$test_rmse_mean %>% which.min()
-xgbcv$evaluation_log$test_rmse_mean %>% min();
+xgbcv$evaluation_log$test_rmse_mean %>% which.min() 
+xgbcv$evaluation_log$test_rmse_mean %>% min(); 
 
-#train the model using the best iteration found by cross validation
+#透過CV找到最好的資料組合訓練模型
 set.seed(27042018)
-xgb_mod <- xgb.train(data = dtrain, params=default_param, nrounds = 485)
+xgb_mod <- xgb.train(data = dtrain, 
+                     params=default_param, 
+                     nrounds = 688)
 XGBpred <- predict(xgb_mod, dtest)
-predictions_XGB <- exp(XGBpred) #need to reverse the log to the real values
+predictions_XGB <- exp(XGBpred) 
 head(predictions_XGB)
-xgb.plot.tree(model = xgb_mod)
-
 #view variable importance plot
 library(Ckmeans.1d.dp) #required for ggplot clustering
-mat <- xgb.importance (feature_names = colnames(train1),model = xgb_mod)
-xgb.ggplot.importance(importance_matrix = mat[1:30], rel_to_first = TRUE)
-
-
-
+mat <- xgb.importance (feature_names = colnames(train),
+                       model = xgb_mod)
+xgb.ggplot.importance(importance_matrix = mat[1:30], 
+                      rel_to_first = TRUE)
 sub_avg <- data.frame(Id = test_labels, 
                       SalePrice = (predictions_XGB+2*predictions_lasso)/3)
 sub_lasso <- data.frame(Id = test_labels, 
@@ -1387,8 +1545,10 @@ sub_xgb <- data.frame(Id = test_labels,
                         SalePrice = predictions_XGB)
 
 head(sub_avg)
-write.csv(sub_avg, file = 'output/housesale.csv', row.names = F)
-write.csv(sub_lasso, file = 'output/housesale_lasso.csv', row.names = F)
-write.csv(sub_xgb, file = 'output/housesale_xgb.csv', row.names = F)
+write.csv(sub_avg, 
+          file = 'output/20200628/housesale10.csv',
+          row.names = F)
+write.csv(sub_lasso, file = 'output/20200628/housesale_lasso.csv', row.names = F)
+write.csv(sub_xgb, file = 'output/20200628/housesale_xgb.csv', row.names = F)
 
 

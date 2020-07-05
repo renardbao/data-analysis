@@ -1500,10 +1500,10 @@ label_train <- all$SalePrice[!is.na(all$SalePrice)]
 default_param<-list(
   objective = "reg:linear",
   booster = "gbtree",
-  eta=0.05, #default = 0.3
+  eta=0.05, 
   gamma=0,
   max_depth=3,  #原本2
-  min_child_weight=4, 
+  min_child_weight=2, 
   subsample=1,
   colsample_bytree=1
 )
@@ -1527,7 +1527,7 @@ xgbcv$evaluation_log$test_rmse_mean %>% min();
 set.seed(27042018)
 xgb_mod <- xgb.train(data = dtrain, 
                      params=default_param, 
-                     nrounds = 688)
+                     nrounds = 567)
 XGBpred <- predict(xgb_mod, dtest)
 predictions_XGB <- exp(XGBpred) 
 head(predictions_XGB)

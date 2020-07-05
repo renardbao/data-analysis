@@ -1811,14 +1811,14 @@ grid.arrange(all %>% ggplot() +
 
 ```
 
-GrLivArea: Above grade (ground) living area square feet
-1stFlrSF: First Floor square feet
-2ndFlrSF: Second floor square feet
-LowQualFinSF: Low quality finished square feet (all floors)
-TotalBsmtSF: Total square feet of basement area
-LotArea: Linear feet of size in square feet
-LotFrontage: Linear feet of street connected to property
-TotRmsAbvGrd: Total rooms above grade (does not include bathrooms)
+GrLivArea: Above grade (ground) living area square feet  
+1stFlrSF: First Floor square feet  
+2ndFlrSF: Second floor square feet  
+LowQualFinSF: Low quality finished square feet (all floors)  
+TotalBsmtSF: Total square feet of basement area  
+LotArea: Linear feet of size in square feet  
+LotFrontage: Linear feet of street connected to property  
+TotRmsAbvGrd: Total rooms above grade (does not include bathrooms)  
 
 從圖形分佈來看似乎大部份的房子都只有1樓，把2樓X2ndFlrSF的部份加上1樓1stFlrSF分佈很接近GrLivArea，我做個相關性檢測一下。
 
@@ -2550,7 +2550,7 @@ xgbcv$evaluation_log$test_rmse_mean %>% min()
 set.seed(27042018)
 xgb_mod <- xgb.train(data = dtrain, 
                      params=default_param, 
-                     nrounds = 688)
+                     nrounds = 567)
 XGBpred <- predict(xgb_mod, dtest)
 predictions_XGB <- exp(XGBpred) 
 head(predictions_XGB)
